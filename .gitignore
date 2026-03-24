@@ -38,10 +38,6 @@ enhancement_progress.json
 # Output data
 *.part*.jsonl
 
-# Claude Code project files
-.claude/
-CLAUDE.md
-
 # Test outputs
 tests/output/
 tests/*.jsonl
