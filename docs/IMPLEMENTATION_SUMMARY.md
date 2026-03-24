@@ -59,7 +59,7 @@ Created `skills/` directory with:
 - `examples/agent_example.py` - Usage examples and demos
 - `test_agent_skill_system.py` - Test suite
 - Updated `README.md` with agent/skill examples
-- Updated `CLAUDE.md` with architecture changes
+- Updated `.claude/CLAUDE.md` with architecture changes
 
 ## File Format
 
@@ -223,7 +223,7 @@ Potential improvements mentioned in documentation:
 1. `distill_pipeline/backends/cli_backend.py` - Added agent/skill support
 2. `run.py` - Added CLI arguments
 3. `README.md` - Added usage examples
-4. `CLAUDE.md` - Updated architecture docs
+4. `.claude/CLAUDE.md` - Updated architecture docs
 5. `requirements.txt` - Added pyyaml version constraint
 
 ## Files Created

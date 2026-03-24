@@ -42,3 +42,7 @@ enhancement_progress.json
 tests/output/
 tests/*.jsonl
 examples/output*.jsonl
+
+# Claude Code project files
+# Note: .claude/ directory contains project-specific AI context
+# CLAUDE.md is kept in .claude/ directory (not in root)

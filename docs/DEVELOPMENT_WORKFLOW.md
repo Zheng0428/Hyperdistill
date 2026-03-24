@@ -35,7 +35,7 @@
   - [ ] 最佳实践
   - [ ] 故障排查
 - [ ] 更新 `docs/README.md` 索引
-- [ ] 如有架构变更，更新 `CLAUDE.md`
+- [ ] 如有架构变更，更新 `.claude/CLAUDE.md`
 
 #### examples/ Directory
 - [ ] 创建可运行的示例脚本

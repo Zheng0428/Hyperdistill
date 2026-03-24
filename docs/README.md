@@ -52,7 +52,7 @@ Agent/Skill 系统实现总结。
 
 根目录文档：
 - `README.md` - 用户文档和使用指南（⭐ 主入口）
-- `CLAUDE.md` - 项目上下文（供 AI 使用）
+- `.claude/CLAUDE.md` - 项目上下文（供 AI 使用）
 
 示例文档：
 - `examples/README_AGENT_QA.md` - Agent Q&A 快速开始
@@ -67,7 +67,8 @@ Agent/Skill 系统实现总结。
 ```
 文档体系：
 ├── README.md (根目录) ⭐                 # 用户入口文档
-├── CLAUDE.md (根目录)                    # AI 上下文
+├── .claude/
+│   └── CLAUDE.md                        # AI 上下文
 ├── docs/                                 # 详细文档
 │   ├── README.md (本文件)               # 文档索引
 │   ├── DEVELOPMENT_WORKFLOW.md ⭐ NEW   # 开发流程（必读）
@@ -92,7 +93,7 @@ Agent/Skill 系统实现总结。
 
 ### 开发者视角
 1. **开发流程**：`docs/DEVELOPMENT_WORKFLOW.md` ⭐ **必读**
-2. **代码架构**：`README.md` (根目录) + `CLAUDE.md`
+2. **代码架构**：`README.md` (根目录) + `.claude/CLAUDE.md`
 3. **历史决策**：`docs/DEVELOPMENT.md`
 4. **测试规范**：`tests/README.md`
 5. **实现细节**：`docs/IMPLEMENTATION_SUMMARY.md`
