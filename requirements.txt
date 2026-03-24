@@ -1,0 +1,5 @@
+openai>=1.0.0
+tqdm
+pyyaml
+# Optional: uncomment for Parquet support
+# pyarrow
