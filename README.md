@@ -217,7 +217,7 @@ python run.py \
 ### 健康检查
 
 ```bash
-python run.py --health-check --config configs/config.json [--verbose]
+python run.py --health-check --config configs/config_glm.json [--verbose]
 ```
 
 ### 后处理过滤

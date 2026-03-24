@@ -47,6 +47,32 @@ class ClientPool:
 
         self._build_pool(api_configs, api_concurrencies)
 
+    @staticmethod
+    def _create_client(config: Dict[str, Any]) -> AsyncOpenAI:
+        """Create an AsyncOpenAI client with proper auth for the endpoint.
+
+        For standard OpenAI-compatible APIs (api_key starts with 'sk-'),
+        uses the default Bearer token auth.
+
+        For other platforms (e.g., PAI-EAS with base64 tokens), overrides
+        the Authorization header to send the token directly without 'Bearer'.
+        """
+        api_key = config["api_key"]
+        base_url = config["base_url"]
+
+        if api_key.startswith("sk-"):
+            # Standard Bearer auth
+            return AsyncOpenAI(base_url=base_url, api_key=api_key)
+        else:
+            # Custom auth: send token directly without Bearer prefix
+            # Use a dummy api_key to satisfy SDK validation,
+            # then override the header
+            return AsyncOpenAI(
+                base_url=base_url,
+                api_key="dummy",
+                default_headers={"Authorization": api_key},
+            )
+
     def _build_pool(
         self,
         api_configs: List[Dict[str, Any]],
@@ -65,10 +91,7 @@ class ClientPool:
         random.shuffle(self.client_configs)
 
         self.clients: List[AsyncOpenAI] = [
-            AsyncOpenAI(
-                base_url=config["base_url"],
-                api_key=config["api_key"],
-            )
+            self._create_client(config)
             for config in self.client_configs
         ]
 

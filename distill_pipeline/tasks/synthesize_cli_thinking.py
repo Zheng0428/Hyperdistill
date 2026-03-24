@@ -1,22 +1,27 @@
 """
-Synthesize Thinking task.
+Synthesize CLI Thinking task.
 
-Takes a multi-turn conversation (messages + tools) and generates synthetic
-thinking for the last non-empty assistant turn.
+Expands each conversation into one item per non-empty assistant turn.
+For each turn, synthesizes a thinking trace and writes it back into that
+assistant message as a structured content block:
+  [{"type": "thinking", "thinking": <thinking>}, {"type": "text", "text": <original>}]
+
+expand_items:
+  One input conversation → N items (one per non-empty assistant turn).
+  Each item carries the original messages + ass_turn_idx (1-based).
+
+get_id:
+  "<first_user_msg_hash>:<ass_turn_idx>"
 
 build_messages:
-  Iterates through all messages; for each assistant role, includes its content
-  (intermediate turns are kept as context). Stops before the last non-empty
-  assistant message so the LLM can generate thinking for that turn.
+  TODO: to be specified. Placeholder sends all messages before the target turn.
 
 process_result:
-  Adds the generated thinking to the last assistant turn, converting its
-  content from a plain string to a structured list:
-    [{"type": "thinking", "thinking": <thinking>}, {"type": "text", "text": <original>}]
+  Finds the ass_turn_idx-th non-empty assistant message and attaches thinking.
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from .base import BaseTask
 from .registry import TaskRegistry
@@ -27,40 +32,79 @@ from ..utils import generate_id
 class SynthesizeCliThinkingTask(BaseTask):
     name = "synthesize_cli_thinking"
 
-    def get_id(self, item: Dict[str, Any]) -> str:
-        text = ""
-        messages = item.get("messages", [])
-        # Use the first user message content as the ID seed
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _base_id(self, messages: List[Dict]) -> str:
+        """Stable ID seed: hash of the first user message content."""
         for msg in messages:
             if msg.get("role") == "user":
                 return generate_id(msg.get("content", ""))
         return generate_id(json.dumps(messages, ensure_ascii=False))
 
-    def get_id_field(self) -> Optional[str]:
-        return None  # ID is computed, not a direct field
+    def _assistant_turns(self, messages: List[Dict]) -> List[Tuple[int, int]]:
+        """Return [(msg_idx, ass_turn_idx), ...] for all non-empty assistant messages.
 
-    def _find_last_assistant_idx(self, messages: List[Dict]) -> int:
-        """Return index of last non-empty assistant message, or -1."""
-        last_idx = -1
+        ass_turn_idx is 1-based among non-empty assistant messages only.
+        """
+        result = []
+        ass_turn = 0
         for i, msg in enumerate(messages):
             if msg.get("role") == "assistant" and msg.get("content", "").strip():
-                last_idx = i
-        return last_idx
+                ass_turn += 1
+                result.append((i, ass_turn))
+        return result
+
+    # ------------------------------------------------------------------
+    # BaseTask interface
+    # ------------------------------------------------------------------
+
+    def get_id(self, item: Dict[str, Any]) -> str:
+        messages = item.get("messages", [])
+        ass_turn_idx = item.get("ass_turn_idx", 1)
+        return f"{self._base_id(messages)}:{ass_turn_idx}"
+
+    def get_id_field(self) -> Optional[str]:
+        return None  # computed
+
+    def expand_items(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Expand one conversation into one item per non-empty assistant turn."""
+        messages = item.get("messages")
+        if not messages:
+            return []
+
+        turns = self._assistant_turns(messages)
+        if not turns:
+            return []
+
+        expanded = []
+        for _msg_idx, ass_turn_idx in turns:
+            expanded_item = dict(item)
+            expanded_item["ass_turn_idx"] = ass_turn_idx
+            expanded.append(expanded_item)
+        return expanded
 
     def build_messages(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """TODO: build the messages to send to the LLM for thinking synthesis.
+
+        Currently sends all messages before the target assistant turn as context.
+        """
         messages = item.get("messages", [])
-        last_idx = self._find_last_assistant_idx(messages)
+        ass_turn_idx = item.get("ass_turn_idx", 1)
 
-        result = []
-        for i, msg in enumerate(messages):
-            if i >= last_idx:
-                break
-            role = msg.get("role", "")
-            content = msg.get("content", "")
-            # For assistant role: include content as-is (intermediate context)
-            result.append({"role": role, "content": content})
+        turns = self._assistant_turns(messages)
+        # Find the message index of the target turn
+        target_msg_idx = next(
+            (msg_idx for msg_idx, t in turns if t == ass_turn_idx), -1
+        )
+        if target_msg_idx == -1:
+            return []
 
-        return result
+        return [
+            {"role": msg.get("role", ""), "content": msg.get("content", "")}
+            for msg in messages[:target_msg_idx]
+        ]
 
     def process_result(
         self,
@@ -69,12 +113,17 @@ class SynthesizeCliThinkingTask(BaseTask):
         thinking: Optional[str],
     ) -> Optional[Dict[str, Any]]:
         messages = item.get("messages", [])
-        last_idx = self._find_last_assistant_idx(messages)
-        if last_idx == -1:
+        ass_turn_idx = item.get("ass_turn_idx", 1)
+
+        turns = self._assistant_turns(messages)
+        target_msg_idx = next(
+            (msg_idx for msg_idx, t in turns if t == ass_turn_idx), -1
+        )
+        if target_msg_idx == -1:
             return None
 
-        original_content = messages[last_idx].get("content", "")
-        messages[last_idx]["content"] = [
+        original_content = messages[target_msg_idx].get("content", "")
+        messages[target_msg_idx]["content"] = [
             {"type": "thinking", "thinking": thinking or ""},
             {"type": "text", "text": original_content},
         ]
@@ -85,4 +134,8 @@ class SynthesizeCliThinkingTask(BaseTask):
         messages = item.get("messages")
         if not messages:
             return False
-        return self._find_last_assistant_idx(messages) != -1
+        ass_turn_idx = item.get("ass_turn_idx")
+        if ass_turn_idx is None:
+            return False
+        turns = self._assistant_turns(messages)
+        return any(t == ass_turn_idx for _, t in turns)

@@ -17,6 +17,12 @@
       "base_url": "https://siflow-longmen.siflow.cn/siflow/longmen/skyinfer/skliu/longmen-glm5-fp8-tp16-dp1-00-12-01/v1",
       "model": "zai-org/GLM-5-FP8",
       "concurrency": 1000
+    },
+    {
+      "api_key": "MDdjOTYwOTBhNDNjZGY1ZDdkZWQxODE3ODI5MTg4MjIzODQwZDRmMw==",
+      "base_url": "http://gw-aszye4rq8xcwbvpxzu-vpc.cn-hangzhou.pai-eas.aliyuncs.com/api/predict/vllm_glm/v1",
+      "model": "/cpfs01/models/GLM-5-FP8",
+      "concurrency": 100
     }
   ]
 }

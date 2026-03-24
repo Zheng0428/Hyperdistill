@@ -40,12 +40,20 @@ def check_endpoint_health(
     }
 
     try:
+        # Auto-detect auth format:
+        # - Keys starting with "sk-" use standard "Bearer {key}" format
+        # - Other tokens (e.g., PAI-EAS base64 tokens) are sent directly
+        if api_key.startswith("sk-"):
+            auth_value = f"Bearer {api_key}"
+        else:
+            auth_value = api_key
+
         curl_cmd = [
             "curl", "-s",
             "--connect-timeout", "5",
             "--max-time", str(timeout),
             "-H", "Content-Type: application/json",
-            "-H", f"Authorization: Bearer {api_key}",
+            "-H", f"Authorization: {auth_value}",
             "-d", json.dumps(request_data),
             chat_url,
         ]
