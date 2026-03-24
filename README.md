@@ -94,12 +94,15 @@ distill_pipeline/
 │   │   ├── kimi.py / deepseek.py / glm.py / minimax.py / default.py
 │   │   ├── registry.py            #   Provider 注册表
 │   │   └── test_providers.py      #   Provider 端到端测试
-│   └── tasks/                     # 蒸馏任务
-│       ├── base.py                #   BaseTask ABC
+│   └── tasks/                     # 蒸馏任务（自动注册）
+│       ├── base.py                #   BaseTask ABC（含 expand_items 扩展接口）
 │       ├── query_response.py      #   query → response
 │       ├── code_to_question.py    #   code → question
 │       ├── text_to_response.py    #   prompt + text → response
 │       ├── stackoverflow.py       #   StackOverflow 数据增强
+│       ├── multiturn_distill.py   #   多轮对话蒸馏（仅最后一轮）
+│       ├── multiturn_all_distill.py #  多轮对话蒸馏（所有轮次，逐轮展开）
+│       ├── synthesize_cli_thinking.py # CLI 对话 thinking 合成
 │       └── registry.py            #   Task 注册表
 ├── configs/                       # API 配置文件
 ├── run.py                         # 统一 CLI 入口
@@ -130,6 +133,9 @@ Engine._process_item(item)
 | `code_to_question` | 从代码片段生成高难度问题 | `text` | `prompt` |
 | `text_to_response` | 将 prompt + text 拼接后生成回复 | `prompt`, `text` | `response` |
 | `stackoverflow` | StackOverflow 数据增强 | `id`, `Post_Title`, `Post_Body`, `Answers` | `response`, `thinking` |
+| `multiturn_distill` | 多轮对话蒸馏（仅最后一轮） | `md5`, `messages` | `messages`, `thinking` |
+| `multiturn_all_distill` | 多轮对话蒸馏（所有轮次，逐轮展开） | `md5`, `messages` | `messages`, `thinking`（每轮一条记录） |
+| `synthesize_cli_thinking` | 为 CLI Agent 对话的每个 assistant 回复合成 thinking | `md5`, `messages` | `messages`（含 `reasoning_content`） |
 
 ### 支持的 Provider（API 后端）
 
@@ -278,6 +284,8 @@ class MyProvider(BaseProvider):
 
 ### 添加新 Task
 
+在 `distill_pipeline/tasks/` 目录下新建 `.py` 文件，使用 `@TaskRegistry.register` 装饰器即可自动注册，无需手动修改 `__init__.py`：
+
 ```python
 # distill_pipeline/tasks/my_task.py
 from .base import BaseTask
@@ -299,6 +307,14 @@ class MyTask(BaseTask):
 
     def validate_item(self, item):
         return "id" in item and "question" in item
+```
+
+如果任务需要将一条输入展开为多条处理项（如多轮对话逐轮处理），可覆写 `expand_items()` 方法：
+
+```python
+    def expand_items(self, item):
+        """将一条对话展开为每轮一条处理项。"""
+        return [{"turn_idx": i, **item} for i in range(len(item["turns"]))]
 ```
 
 ### 添加新 DataLoader
