@@ -10,19 +10,14 @@
       "api_key": "sk-123",
       "base_url": "https://siflow-auriga.siflow.cn/siflow/auriga/skyinfer/abiao/cn-beijing-glm5-fp8-tp8-dp1-eval/v1",
       "model": "zai-org/GLM-5-FP8",
-      "concurrency": 100
-    },
-    {
-      "api_key": "sk-123",
-      "base_url": "https://siflow-longmen.siflow.cn/siflow/longmen/skyinfer/skliu/longmen-glm5-fp8-tp16-dp1-00-12-01/v1",
-      "model": "zai-org/GLM-5-FP8",
-      "concurrency": 1000
+      "concurrency": 200
     },
     {
       "api_key": "MDdjOTYwOTBhNDNjZGY1ZDdkZWQxODE3ODI5MTg4MjIzODQwZDRmMw==",
       "base_url": "http://gw-aszye4rq8xcwbvpxzu-vpc.cn-hangzhou.pai-eas.aliyuncs.com/api/predict/vllm_glm/v1",
       "model": "/cpfs01/models/GLM-5-FP8",
-      "concurrency": 100
+      "concurrency": 200
     }
   ]
 }
+

@@ -38,7 +38,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from openai import AsyncOpenAI
 
 # 确保能找到 distill_pipeline 包
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from distill_pipeline.providers.registry import ProviderRegistry, get_provider
 from distill_pipeline.config import load_config

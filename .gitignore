@@ -42,5 +42,7 @@ enhancement_progress.json
 .claude/
 CLAUDE.md
 
-# Development docs (internal only)
-DEVELOPMENT.md
+# Test outputs
+tests/output/
+tests/*.jsonl
+examples/output*.jsonl

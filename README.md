@@ -36,7 +36,19 @@ python run.py \
 通过 subprocess 调用 `claude` CLI 或其他 Agent：
 
 ```bash
-# 基本用法
+# 基本用法（使用 agent 和 skills）
+python run.py \
+  --task stackoverflow \
+  --backend cli \
+  --agent-name stackoverflow-enhancer \
+  --agents-dir ./agents \
+  --skills code-analyzer,data-validator \
+  --skills-dir ./skills \
+  -i /path/to/input.jsonl \
+  -o /path/to/output.jsonl \
+  -w 4
+
+# 传统方式（直接指定 agent 文件）
 python run.py \
   --task stackoverflow \
   --backend cli \
@@ -52,8 +64,8 @@ ANTHROPIC_API_KEY="sk-xxx" \
 python run.py \
   --task stackoverflow \
   --backend cli \
-  --cli-model MiniMax-M2.5 \
-  --agent-instructions agent.md \
+  --agent-name stackoverflow-enhancer \
+  --agents-dir ./agents \
   -i input.jsonl -o output.jsonl
 ```
 
@@ -84,6 +96,14 @@ distill_pipeline/
 │   │   ├── base.py                #   BaseBackend ABC
 │   │   ├── api_backend.py         #   API 后端（AsyncOpenAI）
 │   │   └── cli_backend.py         #   CLI 后端（subprocess agent）
+│   ├── agents/                    # Agent 管理系统（CLI 后端用）
+│   │   ├── __init__.py
+│   │   ├── agent_loader.py        #   加载 .md agent 定义文件
+│   │   └── agent_registry.py      #   Agent 注册表
+│   ├── skills/                    # Skill 管理系统（CLI 后端用）
+│   │   ├── __init__.py
+│   │   ├── skill_loader.py        #   加载 .md skill 定义文件
+│   │   └── skill_registry.py      #   Skill 注册表
 │   ├── dataloader/                # 数据加载（流式）
 │   │   ├── base.py                #   BaseDataLoader ABC
 │   │   ├── jsonl_loader.py        #   JSONL 流式加载器
@@ -92,8 +112,7 @@ distill_pipeline/
 │   ├── providers/                 # API Provider（API 后端用）
 │   │   ├── base.py                #   BaseProvider ABC
 │   │   ├── kimi.py / deepseek.py / glm.py / minimax.py / default.py
-│   │   ├── registry.py            #   Provider 注册表
-│   │   └── test_providers.py      #   Provider 端到端测试
+│   │   └── registry.py            #   Provider 注册表
 │   └── tasks/                     # 蒸馏任务（自动注册）
 │       ├── base.py                #   BaseTask ABC（含 expand_items 扩展接口）
 │       ├── query_response.py      #   query → response
@@ -104,7 +123,26 @@ distill_pipeline/
 │       ├── multiturn_all_distill.py #  多轮对话蒸馏（所有轮次，逐轮展开）
 │       ├── synthesize_cli_thinking.py # CLI 对话 thinking 合成
 │       └── registry.py            #   Task 注册表
+├── agents/                        # Agent 定义文件（.md）
+│   ├── example_agent.md
+│   ├── qa_expert.md
+│   └── stackoverflow_enhancer.md
+├── skills/                        # Skill 定义文件（.md）
+│   ├── code_analyzer.md
+│   ├── data_validator.md
+│   └── enhanced_response_generation.md
 ├── configs/                       # API 配置文件
+├── examples/                      # 示例脚本
+│   ├── run_qa_agent.sh
+│   ├── agent_example.py
+│   └── README_AGENT_QA.md
+├── tests/                         # 测试脚本
+│   ├── test_agent_skill_system.py
+│   └── test_providers.py
+├── docs/                          # 文档
+│   ├── AGENT_SKILL_SYSTEM.md
+│   ├── DEVELOPMENT.md
+│   └── IMPLEMENTATION_SUMMARY.md
 ├── run.py                         # 统一 CLI 入口
 ├── run.sh                         # 通用 Shell 启动模板
 └── requirements.txt
@@ -208,7 +246,11 @@ python run.py \
 | `--backend cli` | - | 使用 CLI 后端 |
 | `--cli-cmd` | `claude` | CLI 可执行文件名或路径 |
 | `--cli-model` | `sonnet` | 传给 CLI `--model` 的模型名 |
-| `--agent-instructions` | 无 | Agent 指令 `.md` 文件路径（内容预置到每个 prompt） |
+| `--agent-name` | 无 | Agent 名称（从 agents 目录加载） |
+| `--agents-dir` | 无 | Agent 定义文件目录（自动注册） |
+| `--skills` | 无 | 技能名称列表（逗号分隔） |
+| `--skills-dir` | 无 | 技能定义文件目录（自动注册） |
+| `--agent-instructions` | 无 | Agent 指令 `.md` 文件路径（传统方式） |
 | `--cli-timeout` | `600` | 单次 subprocess 超时（秒） |
 | `--cli-extra-args` | 无 | 额外 CLI 参数（逗号分隔） |
 | `-w` / `--workers` | `4` | 并发 subprocess 数 |
@@ -391,5 +433,47 @@ class CsvLoader(BaseDataLoader):
 - **热重载**：API 后端运行中自动重载配置（每 30 分钟）
 - **连接重试**：失败自动换 client / 重新调用（默认 3 次）
 - **健康检查**：运行前测试所有 API 端点，只使用可用端点
-- **Agent 指令**：CLI 后端支持加载 `.md` Agent 指令文件，自动去除 YAML frontmatter
+- **Agent 系统**：CLI 后端支持加载 `.md` Agent 定义文件，支持 YAML frontmatter 配置
+- **Skill 系统**：可复用的技能模块，支持动态组合和注入
+- **Agent/Skill 注册表**：自动发现和注册 agents/skills 目录下的定义文件
 - **Thinking 分离**：自动解析 `<think>...</think>` 标签或 `reasoning_content` 字段
+
+## Agent 和 Skill 系统
+
+CLI 后端现在支持模块化的 agent 和 skill 系统，详见 [AGENT_SKILL_SYSTEM.md](AGENT_SKILL_SYSTEM.md)。
+
+**快速示例**：
+
+```bash
+# 使用预定义的 agent 和 skills
+python run.py --task stackoverflow --backend cli \
+  --agent-name stackoverflow-enhancer \
+  --agents-dir ./agents \
+  --skills code-analyzer,data-validator \
+  --skills-dir ./skills \
+  -i input.jsonl -o output.jsonl
+```
+
+**Agent 文件格式**（`agents/my_agent.md`）：
+```markdown
+---
+name: my-agent
+model: sonnet
+description: Agent description
+---
+
+# Agent Instructions
+Your agent prompt here...
+```
+
+**Skill 文件格式**（`skills/my_skill.md`）：
+```markdown
+---
+name: my-skill
+description: Skill description
+tools: [Read, Write, Bash]
+---
+
+# Skill Instructions
+Your skill instructions here...
+```

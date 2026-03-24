@@ -111,6 +111,22 @@ Examples:
         help="Path to agent instructions .md file (content prepended to every prompt)",
     )
     cli_group.add_argument(
+        "--agent-name", type=str, default=None,
+        help="Name of agent to load from agents directory (overrides --agent-instructions)",
+    )
+    cli_group.add_argument(
+        "--agents-dir", type=str, default=None,
+        help="Directory containing agent .md files (auto-registered)",
+    )
+    cli_group.add_argument(
+        "--skills", type=str, default=None,
+        help="Comma-separated skill names to load from skills directory",
+    )
+    cli_group.add_argument(
+        "--skills-dir", type=str, default=None,
+        help="Directory containing skill .md files (auto-registered)",
+    )
+    cli_group.add_argument(
         "--cli-timeout", type=int, default=600,
         help="CLI subprocess timeout in seconds (default: 600)",
     )
@@ -307,10 +323,19 @@ def _build_cli_backend(args):
     if args.cli_extra_args:
         extra_args = [a.strip() for a in args.cli_extra_args.split(",") if a.strip()]
 
+    # Parse skills list
+    skills = None
+    if args.skills:
+        skills = [s.strip() for s in args.skills.split(",") if s.strip()]
+
     return CliBackend(
         cli_cmd=args.cli_cmd,
         model=args.cli_model,
         agent_instructions_path=args.agent_instructions,
+        agent_name=args.agent_name,
+        skills=skills,
+        agents_dir=args.agents_dir,
+        skills_dir=args.skills_dir,
         timeout=args.cli_timeout,
         cli_extra_args=extra_args,
     )

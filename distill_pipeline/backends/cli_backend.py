@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from .base import BaseBackend
 from ..tasks.base import BaseTask
 from ..utils import log
+from ..agents import Agent, AgentRegistry
+from ..skills import Skill, SkillRegistry
 
 
 class CliBackend(BaseBackend):
@@ -37,16 +39,24 @@ class CliBackend(BaseBackend):
         timeout: int = 600,
         extra_env: Optional[Dict[str, str]] = None,
         cli_extra_args: Optional[List[str]] = None,
+        agent_name: Optional[str] = None,
+        skills: Optional[List[str]] = None,
+        agents_dir: Optional[str] = None,
+        skills_dir: Optional[str] = None,
     ):
         """
         Args:
             cli_cmd: The CLI executable name or path (default: 'claude').
             model: Model name passed via --model flag.
             agent_instructions_path: Path to agent .md file. If set, its
-                content is prepended to every prompt.
+                content is prepended to every prompt. (Legacy, use agent_name instead)
             timeout: Subprocess timeout in seconds (default: 600 = 10min).
             extra_env: Additional environment variables for the subprocess.
             cli_extra_args: Extra CLI arguments (e.g., ['--verbose']).
+            agent_name: Name of the agent to load from registry.
+            skills: List of skill names to load from registry.
+            agents_dir: Directory containing agent .md files (auto-registered).
+            skills_dir: Directory containing skill .md files (auto-registered).
         """
         self.cli_cmd = cli_cmd
         self.model = model
@@ -54,11 +64,43 @@ class CliBackend(BaseBackend):
         self.extra_env = extra_env or {}
         self.cli_extra_args = cli_extra_args or []
 
-        # Load agent instructions once at init
+        # Load agents/skills from directories if specified
+        if agents_dir:
+            AgentRegistry.load_from_directory(agents_dir)
+            log(f"CLI Backend: loaded agents from {agents_dir}")
+        if skills_dir:
+            SkillRegistry.load_from_directory(skills_dir)
+            log(f"CLI Backend: loaded skills from {skills_dir}")
+
+        # Load agent from registry or legacy path
+        self.agent: Optional[Agent] = None
         self.agent_instructions = ""
-        if agent_instructions_path:
+
+        if agent_name:
+            self.agent = AgentRegistry.get(agent_name)
+            if not self.agent:
+                raise ValueError(f"Agent not found in registry: {agent_name}")
+            self.agent_instructions = self.agent.content
+            # Override model if agent specifies one
+            if self.agent.model:
+                self.model = self.agent.model
+            log(f"CLI Backend: loaded agent '{agent_name}' ({len(self.agent_instructions)} chars)")
+        elif agent_instructions_path:
+            # Legacy: load from file directly
             self.agent_instructions = self._load_instructions(agent_instructions_path)
             log(f"CLI Backend: loaded agent instructions ({len(self.agent_instructions)} chars)")
+
+        # Load skills from registry
+        self.skills: List[Skill] = []
+        if skills:
+            for skill_name in skills:
+                skill = SkillRegistry.get(skill_name)
+                if not skill:
+                    log(f"Warning: Skill not found in registry: {skill_name}")
+                else:
+                    self.skills.append(skill)
+            if self.skills:
+                log(f"CLI Backend: loaded {len(self.skills)} skill(s): {[s.name for s in self.skills]}")
 
         log(
             f"CLI Backend: cmd={self.cli_cmd}, model={self.model}, "
@@ -98,6 +140,7 @@ class CliBackend(BaseBackend):
         """Build the full prompt to pass to the CLI via stdin.
 
         If agent_instructions are loaded, prepend them.
+        If skills are loaded, append them.
         Then append the user content from task.build_messages().
 
         Args:
@@ -111,9 +154,23 @@ class CliBackend(BaseBackend):
 
         # Collect system and user parts
         parts = []
+
+        # Add agent instructions
         if self.agent_instructions:
             parts.append(self.agent_instructions)
 
+        # Add skills
+        if self.skills:
+            parts.append("\n## Available Skills\n")
+            for skill in self.skills:
+                parts.append(f"### Skill: {skill.name}")
+                if skill.description:
+                    parts.append(f"Description: {skill.description}")
+                if skill.tools:
+                    parts.append(f"Tools: {', '.join(skill.tools)}")
+                parts.append(f"\n{skill.content}\n")
+
+        # Add task messages
         for msg in messages:
             role = msg.get("role", "")
             content = msg.get("content", "")
