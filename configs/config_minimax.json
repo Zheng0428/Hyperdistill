@@ -4,7 +4,19 @@
       "api_key": "sk-123",
       "base_url": "https://siflow-longmen.siflow.cn/siflow/longmen/skyinfer/gji/minimax-m2-5/1/8000/v1",
       "model": "MiniMax-M2.5",
-      "concurrency": 1000
+      "concurrency": 256
+    },
+    {
+      "api_key": "sk-123",
+      "base_url": "https://siflow-longmen.siflow.cn/siflow/longmen/skyinfer/skliu/longmen-minimax-m25-20260305/v1",
+      "model": "MiniMaxAI/MiniMax-M2.5",
+      "concurrency": 256
+    },
+    {
+      "api_key": "sk-123",
+      "base_url": "https://siflow-longmen.siflow.cn/siflow/longmen/skyinfer/xdma/longmen-minimax-m25-20260305/v1",
+      "model": "MiniMaxAI/MiniMax-M2.5",
+      "concurrency": 256
     }
   ]
 }

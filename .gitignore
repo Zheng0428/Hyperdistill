@@ -11,9 +11,7 @@ build/
 configs/*.active.json
 
 # Real API configs (contain api_key / tokens)
-configs/config_glm.json
-configs/config_kimi.json
-configs/config_minimax.json
+configs/config_*.json
 
 # Environment
 .env

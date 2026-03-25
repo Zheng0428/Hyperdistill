@@ -174,6 +174,7 @@ Engine._process_item(item)
 | `multiturn_distill` | 多轮对话蒸馏（仅最后一轮） | `md5`, `messages` | `messages`, `thinking` |
 | `multiturn_all_distill` | 多轮对话蒸馏（所有轮次，逐轮展开） | `md5`, `messages` | `messages`, `thinking`（每轮一条记录） |
 | `synthesize_cli_thinking` | 为 CLI Agent 对话的每个 assistant 回复合成 thinking | `md5`, `messages` | `messages`（含 `reasoning_content`） |
+| `synthesize_cli_content` | 为 CLI Agent 对话中 `"(no content)"` 的 assistant 回复合成文字内容 | `md5`, `messages` | `messages`（`"(no content)"` 替换为合成文本） |
 
 ### 支持的 Provider（API 后端）
 

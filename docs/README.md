@@ -28,6 +28,16 @@ Agent 和 Skill 系统完整文档。
 - 最佳实践
 - 未来增强计划
 
+### SYNTHESIZE_CLI_CONTENT.md
+`synthesize_cli_content` 任务文档。
+
+**内容包括**：
+- 任务概述和工作原理
+- 输入/输出格式说明
+- CLI 使用方法
+- 生成内容示例
+- 测试说明
+
 ### DEVELOPMENT.md
 开发历史和设计决策文档。
 

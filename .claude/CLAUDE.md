@@ -3,8 +3,8 @@
 ## Project Location
 `/volume/pt-coder/users/tuney/Script/distill_pipeline/`
 
-## What This Is
-A modular LLM data distillation framework. Supports two execution backends: **API** (AsyncOpenAI) and **CLI** (subprocess agent like `claude --bare`).
+## Overview
+Modular LLM data distillation framework supporting dual execution backends: API (AsyncOpenAI) and CLI (subprocess agent via `claude --bare`).
 
 ## Architecture
 ```
@@ -18,142 +18,144 @@ Engine (sliding-window concurrency)
 ```
 
 ## Key Modules
-- **backends/**: `BaseBackend` ABC → `ApiBackend`, `CliBackend`
-- **agents/**: Agent loading, registry, YAML frontmatter parsing (CLI backend)
-- **skills/**: Skill loading, registry, dynamic injection (CLI backend)
-- **dataloader/**: Streaming JSONL/Parquet loaders (never full load), auto-detect by extension
-- **providers/**: Kimi, DeepSeek, GLM, MiniMax, Default — each handles `extra_body` + response parsing
-- **tasks/**: `query_response`, `code_to_question`, `text_to_response`, `stackoverflow`
-- **engine.py**: Sliding-window async concurrency (fixed batch-stall bug at 5k items)
-- **output_writer.py**: Partitioned JSONL output, single-pass streaming resume/dedup
-- **client_pool.py**: Concurrency expansion, random selection, hot-reload
-- **providers/test_providers.py**: End-to-end provider testing against real endpoints
+- **backends/**: BaseBackend ABC with ApiBackend and CliBackend implementations
+- **agents/**: Agent loading, registry, YAML frontmatter parsing for CLI backend
+- **skills/**: Skill loading, registry, dynamic injection for CLI backend
+- **dataloader/**: Streaming JSONL/Parquet loaders with auto-detection by extension
+- **providers/**: API provider implementations (Kimi, DeepSeek, GLM, MiniMax, Default)
+- **tasks/**: Task implementations (query_response, code_to_question, text_to_response, stackoverflow, multiturn_distill, multiturn_all_distill, synthesize_cli_thinking, synthesize_cli_content)
+- **engine.py**: Sliding-window async concurrency engine
+- **output_writer.py**: Partitioned JSONL output with streaming resume/dedup
+- **client_pool.py**: Concurrent client pool with random selection and hot-reload
 
-## Important Design Decisions
-- Registry pattern for Task/Provider/DataLoader/Agent/Skill — new ones just register
-- Agent system: YAML frontmatter for metadata, supports model override
-- Skill system: Reusable capabilities injected into agent prompts
-- MiniMax thinking is in `<think>` tags inside content (not `reasoning_content`)
-- Engine uses sliding window (not batch drain) to avoid stalling
-- OutputWriter only stores `processed_ids` set, not full data objects
-- CliBackend uses `asyncio.create_subprocess_exec` for non-blocking subprocess
+## Design Decisions
+- Registry pattern for extensibility (Task/Provider/DataLoader/Agent/Skill)
+- Agent system with YAML frontmatter metadata and model override support
+- Skill system with reusable capabilities injectable into agent prompts
+- MiniMax thinking extraction from `<think>` tags in content
+- Sliding-window concurrency to prevent batch stalling
+- OutputWriter memory optimization (stores only processed_ids set)
+- CliBackend uses asyncio.create_subprocess_exec for non-blocking execution
 
-## Config Files
-- `configs/config_{provider}.json` — API endpoint configs
-- `agents/*.md` — Agent definition files with YAML frontmatter
-- `skills/*.md` — Skill definition files with YAML frontmatter
-- Agent instructions loaded from `.md` files, YAML frontmatter auto-stripped
+## Configuration
+- `configs/config_{provider}.json` - API endpoint configurations
+- `agents/*.md` - Agent definitions with YAML frontmatter
+- `skills/*.md` - Skill definitions with YAML frontmatter
 
-## CLI Entry Point
+## CLI Usage
 ```bash
-# API mode
-python run.py --task <name> --backend api --provider <name> --config <json> -i <in> -o <out>
+# API backend
+python run.py --task <task> --backend api --provider <provider> --config <config.json> -i <input> -o <output>
 
-# CLI agent mode (with agent/skill system)
-python run.py --task <name> --backend cli \
-  --agent-name <agent> --agents-dir ./agents \
-  --skills <skill1>,<skill2> --skills-dir ./skills \
-  -i <in> -o <out>
+# CLI backend with agent/skill system
+python run.py --task <task> --backend cli --agent-name <agent> --agents-dir ./agents --skills <skill1>,<skill2> --skills-dir ./skills -i <input> -o <output>
 
-# CLI agent mode (legacy)
-python run.py --task <name> --backend cli --cli-model <model> --agent-instructions <md> -i <in> -o <out>
+# CLI backend (legacy mode)
+python run.py --task <task> --backend cli --cli-model <model> --agent-instructions <agent.md> -i <input> -o <output>
 ```
 
 ## Development Workflow
 
-### 🚀 Adding New Features
+### Core Principles
 
-**MANDATORY STEPS** (必须执行的步骤):
+Development follows a pragmatic approach prioritizing code quality and user documentation over process overhead. The primary requirement is maintaining README.md as the single source of truth for users.
 
-1. **Write Code**
-   - Implement the feature in appropriate module
-   - Follow existing patterns (Registry, ABC, etc.)
-   - Add docstrings and comments
+### Mandatory Requirements
 
-2. **Write Documentation** ⚠️ **CRITICAL - DO NOT SKIP**
-   - Create/update documentation in `docs/`
-   - **MUST update** `README.md` (root) - 用户总入口
-   - Update `CLAUDE.md` if architecture changes
-   - Add examples in `examples/` if applicable
-   - Update module-specific docs
+When adding new functionality:
 
-3. **Write Tests** ⚠️ **CRITICAL - DO NOT SKIP**
-   - Add tests in `tests/`
-   - Test all new functionality
-   - Verify edge cases
-   - Run existing tests to ensure no breakage
+1. **Implementation**
+   - Follow existing patterns (Registry pattern, ABC inheritance, async/await)
+   - Add comprehensive docstrings for all public APIs
+   - Include inline comments for non-trivial logic
 
-4. **Update Configuration**
-   - Update `.gitignore` if needed
-   - Update `requirements.txt` if new dependencies
-   - Update CLI arguments in `run.py` if needed
+2. **Documentation**
+   - Update `README.md` with feature description, CLI parameters, and usage examples
+   - This is the only strictly required documentation update
+   - Users discover functionality through README.md exclusively
 
-### 📝 Documentation Checklist
+3. **Dependencies**
+   - Update `requirements.txt` when adding new dependencies
 
-When adding ANY new feature, **MUST** update:
+### Optional Requirements (Judgment-Based)
 
-- [ ] `README.md` (root) ⭐ **HIGHEST PRIORITY** - 用户入口文档
-  - [ ] Update feature list
-  - [ ] Update CLI parameters table
-  - [ ] Update examples
-  - [ ] Update architecture diagram if needed
+The following are recommended but not mandatory. Developers should assess based on complexity and criticality:
 
-- [ ] `docs/` directory
-  - [ ] Create new doc or update existing
-  - [ ] Add to `docs/README.md` index
-  - [ ] Include usage examples
-  - [ ] Document all parameters
+**Testing**
+- Write tests for complex logic and core functionality
+- Simple wrappers and utility functions may skip tests
+- Decision criterion: Would breakage affect multiple users?
 
-- [ ] `CLAUDE.md` (this file) if:
-  - [ ] Architecture changes
-  - [ ] New modules added
-  - [ ] Design decisions made
+**Detailed Documentation**
+- Create `docs/*.md` only when README.md is insufficient
+- Required for: complex systems, extensive configuration options, architectural explanations
+- Most features require only README.md + docstrings
 
-- [ ] `examples/`
-  - [ ] Add working examples
-  - [ ] Add example data if needed
-  - [ ] Update example README
+**Examples**
+- Add to `examples/` only when demonstration is necessary
+- Skip for straightforward features adequately covered in README.md
 
-### 🧪 Testing Checklist
+### Explicitly Not Required
 
-- [ ] Write unit tests in `tests/`
-- [ ] Update `tests/README.md` if new test added
-- [ ] Run all existing tests: `python tests/test_*.py`
-- [ ] Test with real data
-- [ ] Document test in test file docstring
+- Updating CLAUDE.md (only for major architectural changes)
+- Creating tests for every function
+- Adding examples for every feature
+- Exhaustive documentation beyond README.md
 
-### 📂 File Organization Rules
-
-1. **Root directory**: Keep MINIMAL
-   - Only: README.md, CLAUDE.md, run.py, run.sh, requirements.txt, .gitignore
-
-2. **Documentation**: ALL in `docs/`
-   - System docs, design docs, implementation notes
-   - Each doc must be indexed in `docs/README.md`
-
-3. **Tests**: ALL in `tests/`
-   - Test files must start with `test_`
-   - Include README explaining how to run
-
-4. **Examples**: ALL in `examples/`
-   - Working scripts and sample data
-   - Include README for each example
-
-5. **Code**: In `distill_pipeline/` package
-   - Follow module structure
-   - Use Registry pattern for extensibility
-
-### 🔄 Standard Workflow Example
-
-Example: Adding a new Task
+### Minimal Development Flow
 
 ```bash
-# 1. Write code
-vim distill_pipeline/tasks/my_new_task.py
-# Use @TaskRegistry.register decorator
+# 1. Implement feature
+vim distill_pipeline/tasks/new_task.py
+# Add docstrings
 
-# 2. Write documentation (MANDATORY)
-# 2a. Update root README (MOST IMPORTANT)
+# 2. Update README.md
+vim README.md
+# Add to task list, CLI parameters, usage example
+
+# 3. Verify functionality
+python run.py --task new_task -i test.jsonl -o out.jsonl
+
+# 4. Commit
+git commit -m "Add new_task"
+```
+
+### Documentation Reading Strategy for AI Assistants
+
+**Primary Source**
+- Always read `README.md` first to understand overall structure and functionality
+
+**Secondary Sources (On-Demand)**
+- `docs/AGENT_SKILL_SYSTEM.md` - When working with Agent/Skill system
+- `docs/DEVELOPMENT.md` - When understanding historical context is necessary
+- `docs/SYNTHESIZE_CLI_CONTENT.md` - When developing similar task implementations
+- Other docs - Only when specifically relevant to current work
+
+**Anti-Pattern**
+- Reading all documentation files on every interaction (information overload)
+
+### Documentation Hierarchy
+
+Priority order for documentation efforts:
+
+1. README.md - User entry point, mandatory updates
+2. Code docstrings - Developer reference, mandatory for public APIs
+3. docs/ detailed documentation - Complex features only
+4. tests/ - Critical functionality only
+5. examples/ - Non-trivial use cases only
+
+### When to Create Detailed Documentation
+
+Create documentation in `docs/` only when:
+
+1. System complexity exceeds README.md capacity (e.g., Agent/Skill system)
+2. Multiple configuration options require detailed explanation
+3. Internal mechanisms need architectural documentation
+4. Design decisions require rationale documentation
+
+Standard features require only README.md entries and code docstrings.
+
+## Project Structure
 vim README.md
 # - Add task to task table
 # - Add usage example
@@ -201,67 +203,47 @@ vim requirements.txt
 
 # 8. Commit
 git add .
-git commit -m "Add my_new_task with full docs and tests"
+git commit -m "Add my_new_task"
 ```
-
-### ⚠️ CRITICAL REMINDERS
-
-1. **README.md 是用户的第一入口** - 必须及时更新
-2. **所有新功能必须有文档** - 在 docs/ 目录
-3. **所有新功能必须有测试** - 在 tests/ 目录
-4. **保持主目录整洁** - 只放必要文件
-5. **遵循现有模式** - Registry, ABC, 异步等
-6. **写完整的 docstrings** - 包括参数、返回值、异常
-7. **测试向后兼容性** - 确保旧功能不受影响
-
-### 🎯 Documentation Priority Order
-
-When time is limited, prioritize in this order:
-
-1. **README.md** (root) ⭐⭐⭐ - HIGHEST - 用户第一看到的
-2. **Code docstrings** ⭐⭐ - For developers
-3. **docs/** detailed docs ⭐⭐ - For deep understanding
-4. **examples/** ⭐ - For learning by doing
-5. **tests/README.md** - For running tests
-
-**但理想情况下，所有文档都应该完整！**
 
 ## Project Structure
 ```
 distill_pipeline/
-├── README.md                    # 用户文档（总入口）
-├── CLAUDE.md                    # 本文件：AI 上下文
-├── run.py / run.sh              # 主入口
+├── .claude/
+│   └── CLAUDE.md                # Project context (this file)
+├── README.md                    # User documentation (primary entry point)
+├── run.py / run.sh              # Entry points
 ├── requirements.txt
-├── docs/                        # 📚 文档目录
-│   ├── README.md               # 文档索引
-│   ├── AGENT_SKILL_SYSTEM.md   # Agent/Skill 系统文档
-│   ├── DEVELOPMENT.md          # 开发历史
+├── docs/                        # Documentation
+│   ├── README.md
+│   ├── AGENT_SKILL_SYSTEM.md
+│   ├── DEVELOPMENT.md
 │   └── IMPLEMENTATION_SUMMARY.md
-├── tests/                       # 🧪 测试目录
+├── tests/                       # Test suite
 │   ├── README.md
 │   ├── test_agent_skill_system.py
 │   └── test_providers.py
-├── examples/                    # 💡 示例目录
+├── examples/                    # Usage examples
 │   ├── README_AGENT_QA.md
 │   └── run_qa_agent.sh
-├── agents/                      # Agent 定义文件
-├── skills/                      # Skill 定义文件
-├── configs/                     # API 配置
-└── distill_pipeline/            # 核心包
-    ├── agents/                  # Agent 系统代码
-    ├── skills/                  # Skill 系统代码
-    ├── backends/                # 执行后端
-    ├── providers/               # API Providers
-    ├── tasks/                   # 蒸馏任务
-    └── dataloader/              # 数据加载器
+├── agents/                      # Agent definitions
+├── skills/                      # Skill definitions
+├── configs/                     # API configurations
+└── distill_pipeline/            # Core package
+    ├── agents/
+    ├── skills/
+    ├── backends/
+    ├── providers/
+    ├── tasks/
+    └── dataloader/
 ```
 
-## Related Files
-- `docs/DEVELOPMENT.md` — Full development history with 6 phases
-- `README.md` — User-facing documentation (总入口)
-- `docs/AGENT_SKILL_SYSTEM.md` — Agent and skill system documentation
-- `tests/README.md` — Test suite documentation
+## Related Documentation
+- `README.md` - Primary user documentation
+- `docs/DEVELOPMENT.md` - Development history
+- `docs/AGENT_SKILL_SYSTEM.md` - Agent/Skill system documentation
+- `tests/README.md` - Test suite documentation
+- `examples/README_AGENT_QA.md` - Agent Q&A examples
 - `examples/README_AGENT_QA.md` — Agent Q&A example documentation
 - Original project: `/volume/pt-coder/users/tuney/Script/raw2qa_new/`
 - StackOverflow data: `/volume/pt-coder/users/tuney/pretrain_data/stackoverflow/`
