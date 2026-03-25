@@ -379,16 +379,11 @@ def cmd_distill(args):
     # Initialize task
     task = get_task(args.task)
 
-    # Determine ID fields from task
-    id_field = task.get_id_field()
-    id_fields = [id_field, "id", "data_id"] if id_field else ["id", "data_id"]
-    seen = set()
-    unique_id_fields = [f for f in id_fields if not (f in seen or seen.add(f))]
-
+    # OutputWriter will automatically use task.get_id_fields() for ID extraction
     writer = OutputWriter(
         output_file=args.output,
         split_max_lines=args.split_max_lines,
-        id_fields=unique_id_fields,
+        id_fields=["id", "data_id"],  # Fallback fields when task doesn't provide get_id_fields()
         progress_threshold=args.progress_threshold,
     )
 
