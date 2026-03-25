@@ -260,8 +260,9 @@ class SynthesizeCliThinkingTask(BaseTask):
         ass_turn_idx = item.get("ass_turn_idx", 1)
         return f"{md5}:{ass_turn_idx}"
 
-    def get_id_field(self) -> Optional[str]:
-        return "md5"
+    def get_id_fields(self) -> Optional[List[str]]:
+        """Compose ID from md5 and ass_turn_idx."""
+        return ["md5", "ass_turn_idx"]
 
     def expand_items(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Expand one conversation into one item per non-empty assistant turn."""

@@ -20,8 +20,9 @@ class QueryResponseTask(BaseTask):
     def get_id(self, item: Dict[str, Any]) -> str:
         return str(item["id"])
 
-    def get_id_field(self) -> Optional[str]:
-        return "id"
+    def get_id_fields(self) -> Optional[List[str]]:
+        """Use id field as the ID."""
+        return ["id"]
 
     def build_messages(self, item: Dict[str, Any]) -> List[Dict[str, str]]:
         return [{"role": "user", "content": item["question"]}]

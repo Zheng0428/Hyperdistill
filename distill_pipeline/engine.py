@@ -106,6 +106,10 @@ class DistillEngine:
                         )
                         continue
 
+                    # Auto-inject 'id' field if not present
+                    if "id" not in result:
+                        result["id"] = self.task.get_id(item)
+
                     return result
 
                 except Exception as e:
@@ -188,7 +192,7 @@ class DistillEngine:
         log(f"Input file: ~{input_total} items (fast count)")
 
         # Step 2: Load resume state
-        self.writer.load_resume_state(input_total=input_total)
+        self.writer.load_resume_state(input_total=input_total, task=self.task)
 
         if self.writer.should_skip:
             log(f"Skipping: already >= {self.progress_threshold}% complete")

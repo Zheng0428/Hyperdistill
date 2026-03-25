@@ -21,8 +21,9 @@ class TextToResponseTask(BaseTask):
     def get_id(self, item: Dict[str, Any]) -> str:
         return item.get("data_id") or generate_id("", item.get("text", ""))
 
-    def get_id_field(self) -> Optional[str]:
-        return "data_id"
+    def get_id_fields(self) -> Optional[List[str]]:
+        """Use data_id field as the ID."""
+        return ["data_id"]
 
     def build_messages(self, item: Dict[str, Any]) -> List[Dict[str, str]]:
         prompt = item.get("prompt", "")

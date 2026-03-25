@@ -330,8 +330,9 @@ class SynthesizeCliContentTask(BaseTask):
         msg_idx = item.get("msg_idx", 0)
         return f"{md5}:{msg_idx}"
 
-    def get_id_field(self) -> Optional[str]:
-        return "md5"
+    def get_id_fields(self) -> Optional[List[str]]:
+        """Compose ID from md5 and msg_idx."""
+        return ["md5", "msg_idx"]
 
     def expand_items(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Expand one conversation into one item per no-content assistant turn."""

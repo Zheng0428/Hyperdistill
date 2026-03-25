@@ -88,9 +88,9 @@ class MultiTurnAllDistillTask(BaseTask):
         turn_idx = item.get("turn_idx", 1)
         return f"{md5}:{turn_idx}"
 
-    def get_id_field(self) -> Optional[str]:
-        """We use md5 field as the base ID."""
-        return "md5"
+    def get_id_fields(self) -> Optional[List[str]]:
+        """Compose ID from md5 and turn_idx."""
+        return ["md5", "turn_idx"]
 
     def _has_image_content(self, messages: List[Dict]) -> bool:
         """Check if messages contain image content.

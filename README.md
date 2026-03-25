@@ -341,6 +341,10 @@ class MyTask(BaseTask):
     def get_id(self, item):
         return str(item["id"])
 
+    def get_id_fields(self):
+        """指定用于构造唯一ID的字段（用于resume/dedup）。"""
+        return ["id"]  # 单字段ID
+
     def build_messages(self, item):
         return [{"role": "user", "content": item["question"]}]
 
@@ -352,12 +356,48 @@ class MyTask(BaseTask):
         return "id" in item and "question" in item
 ```
 
+#### 多字段ID支持
+
+对于需要组合多个字段作为唯一标识的场景（如多轮对话的 `md5:turn_idx`），`get_id_fields()` 支持返回字段列表：
+
+```python
+    def get_id(self, item):
+        # 生成组合ID
+        return f"{item['md5']}:{item['turn_idx']}"
+
+    def get_id_fields(self):
+        # 指定ID由哪些字段组合而成（用 ':' 连接）
+        return ["md5", "turn_idx"]
+```
+
+框架会自动：
+1. 在输出结果中注入 `id` 字段（如 `"id": "abc123:2"`）
+2. Resume时从输出文件的多个字段重建组合ID进行匹配
+
+**示例场景**：
+
+| 场景 | get_id_fields() | 生成的ID | 说明 |
+|------|----------------|---------|------|
+| 单条问答 | `["id"]` | `"12345"` | 单字段ID |
+| 多轮对话 | `["md5", "turn_idx"]` | `"abc:2"` | 对话MD5 + 轮数 |
+| 用户会话 | `["user_id", "session_id", "msg_idx"]` | `"user1:sess2:5"` | 三字段组合 |
+
+#### expand_items() - 一对多展开
+
 如果任务需要将一条输入展开为多条处理项（如多轮对话逐轮处理），可覆写 `expand_items()` 方法：
 
 ```python
     def expand_items(self, item):
         """将一条对话展开为每轮一条处理项。"""
-        return [{"turn_idx": i, **item} for i in range(len(item["turns"]))]
+        turns = []
+        for i in range(len(item["turns"])):
+            turn_item = dict(item)  # 浅拷贝
+            turn_item["turn_idx"] = i + 1
+            turns.append(turn_item)
+        return turns
+
+    def get_id_fields(self):
+        return ["md5", "turn_idx"]  # 确保每个展开项有唯一ID
 ```
 
 ### 添加新 DataLoader

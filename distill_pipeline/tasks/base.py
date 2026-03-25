@@ -73,10 +73,20 @@ class BaseTask(ABC):
         """
         ...
 
-    def get_id_field(self) -> Optional[str]:
-        """Return the field name used as the ID source, or None if computed.
+    def get_id_fields(self) -> Optional[List[str]]:
+        """Return field names used to construct the unique ID.
 
-        This helps the OutputWriter know which field to check for resume.
+        This helps the OutputWriter compose the ID for resume/dedup matching.
+        Multiple fields will be joined with ':' separator.
+
+        Returns:
+            List of field names to combine for ID generation.
+            None means get_id() returns a fully custom ID not based on item fields.
+
+        Examples:
+            ["id"] -> use single field
+            ["md5", "turn_idx"] -> compose as "md5:turn_idx"
+            ["user_id", "session_id", "timestamp"] -> "user_id:session_id:timestamp"
         """
         return None
 

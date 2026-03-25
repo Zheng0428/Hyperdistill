@@ -11,9 +11,12 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from .utils import log
+
+if TYPE_CHECKING:
+    from .tasks.base import BaseTask
 
 
 class OutputWriter:
@@ -50,12 +53,43 @@ class OutputWriter:
         # Ensure output directory exists
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def _get_item_id(self, data: Dict[str, Any]) -> Optional[str]:
-        """Extract the unique ID from a data item by checking id_fields in order."""
+    def _get_item_id(self, data: Dict[str, Any], task: Optional["BaseTask"] = None) -> Optional[str]:
+        """Extract the unique ID from a data item.
+
+        Supports multiple strategies:
+        1. If task provides get_id_fields(), compose ID from those fields (joined by ':')
+        2. Try direct 'id' field
+        3. Fallback to configured id_fields (first match)
+
+        Args:
+            data: The data item dict.
+            task: Optional task instance for field-based ID composition.
+
+        Returns:
+            The unique ID string, or None if not found.
+        """
+        # Strategy 1: Use task's id_fields to compose multi-field ID
+        if task:
+            task_id_fields = task.get_id_fields()
+            if task_id_fields:
+                values = []
+                for field in task_id_fields:
+                    val = data.get(field)
+                    if val is None:
+                        return None  # Missing required field
+                    values.append(str(val))
+                return ":".join(values)
+
+        # Strategy 2: Try direct 'id' field
+        if "id" in data and data["id"]:
+            return str(data["id"])
+
+        # Strategy 3: Fallback to configured id_fields (first match)
         for field in self.id_fields:
             val = data.get(field)
             if val is not None:
                 return str(val)
+
         return None
 
     def _get_part_path(self, part_index: int) -> Path:
@@ -88,7 +122,7 @@ class OutputWriter:
 
         return output_files, part_indices
 
-    def load_resume_state(self, input_total: int = 0) -> None:
+    def load_resume_state(self, input_total: int = 0, task: Optional["BaseTask"] = None) -> None:
         """Load processed outputs from existing files for resume/dedup.
 
         Uses a single-pass streaming scan per file — never reads an entire
@@ -96,6 +130,7 @@ class OutputWriter:
 
         Args:
             input_total: Total number of valid input items (for progress check).
+            task: Optional task instance for field-based ID composition.
         """
         output_files, part_indices = self._discover_output_files()
 
@@ -119,7 +154,7 @@ class OutputWriter:
                         line_count += 1
                         try:
                             data = json.loads(line)
-                            uid = self._get_item_id(data)
+                            uid = self._get_item_id(data, task=task)
                             if uid:
                                 unique_ids.add(uid)
                         except json.JSONDecodeError:
