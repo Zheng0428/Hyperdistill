@@ -121,10 +121,10 @@ class SynthesizeCliThinkingTask(BaseTask):
 
     def _base_id(self, messages: List[Dict]) -> str:
         """Stable ID seed: hash of the first user message content."""
+        content = ""
         for msg in messages:
-            if msg.get("role") == "user":
-                return generate_id(msg.get("content", ""))
-        return generate_id(json.dumps(messages, ensure_ascii=False))
+            content = content + "\n" +msg.get("content", "")
+        return generate_id(content)
 
     def _assistant_turns(self, messages: List[Dict]) -> List[Tuple[int, int]]:
         """Return [(msg_idx, ass_turn_idx), ...] for all non-empty assistant messages.
@@ -279,7 +279,8 @@ class SynthesizeCliThinkingTask(BaseTask):
         for _msg_idx, ass_turn_idx in turns:
             expanded_item = copy.deepcopy(item)
             expanded_item["ass_turn_idx"] = ass_turn_idx
-            expanded.append(expanded_item)
+            if item["messages"][_msg_idx].get("reasoning_content") is None:
+                expanded.append(expanded_item)
         return expanded
 
     def build_messages(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
