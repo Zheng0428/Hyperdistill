@@ -123,7 +123,7 @@ class SynthesizeCliThinkingTask(BaseTask):
         """Stable ID seed: hash of the first user message content."""
         content = ""
         for msg in messages:
-            content = content + "\n" +msg.get("content", "")
+            content = content + "\n" + msg.get("content", "")
         return generate_id(content)
 
     def _assistant_turns(self, messages: List[Dict]) -> List[Tuple[int, int]]:
@@ -139,10 +139,10 @@ class SynthesizeCliThinkingTask(BaseTask):
                 continue
             content = msg.get("content", "")
             text = self._extract_text(content) if not isinstance(content, str) else content
-            if text.strip():
-                ass_turn += 1
-                result.append((i, ass_turn))
-                turn_idx_map[ass_turn] = i
+            # if text.strip():
+            ass_turn += 1
+            result.append((i, ass_turn))
+            turn_idx_map[ass_turn] = i
         return result, turn_idx_map
 
     @staticmethod
@@ -354,6 +354,10 @@ class SynthesizeCliThinkingTask(BaseTask):
         msg["reasoning_content"] = synth
 
         item["messages"] = messages
+        item["target_msg_idx"] = target_msg_idx
+
+        import pdb; pdb.set_trace()
+
         return item
 
     def validate_item(self, item: Dict[str, Any]) -> bool:

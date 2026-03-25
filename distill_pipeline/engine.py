@@ -100,10 +100,12 @@ class DistillEngine:
                     result = self.task.process_result(item, content, thinking)
 
                     if result is None:
-                        log(
-                            f"Invalid result for item {self.task.get_id(item)}, "
-                            f"retrying ({retry + 1}/{self.max_retries})"
-                        )
+                        # Only log retry message if this is not the first attempt
+                        if retry > 0:
+                            log(
+                                f"Invalid result for item {self.task.get_id(item)}, "
+                                f"retrying ({retry + 1}/{self.max_retries})"
+                            )
                         continue
 
                     # Auto-inject 'id' field if not present
@@ -116,19 +118,21 @@ class DistillEngine:
                     error_name = type(e).__name__
                     item_id = self.task.get_id(item)
 
-                    if "APIConnectionError" in error_name or "Connection" in str(e):
-                        log(
-                            f"Connection error for {item_id}, "
-                            f"retrying ({retry + 1}/{self.max_retries}): "
-                            f"{error_name}"
-                        )
-                    elif "TimeoutError" in error_name or "Timeout" in str(e):
-                        log(
-                            f"Timeout for {item_id}, "
-                            f"retrying ({retry + 1}/{self.max_retries})"
-                        )
-                    else:
-                        log(f"Error for {item_id}: {error_name}: {e}")
+                    # Only log retry message if this is not the first attempt
+                    if retry > 0:
+                        if "APIConnectionError" in error_name or "Connection" in str(e):
+                            log(
+                                f"Connection error for {item_id}, "
+                                f"retrying ({retry + 1}/{self.max_retries}): "
+                                f"{error_name}"
+                            )
+                        elif "TimeoutError" in error_name or "Timeout" in str(e):
+                            log(
+                                f"Timeout for {item_id}, "
+                                f"retrying ({retry + 1}/{self.max_retries})"
+                            )
+                        else:
+                            log(f"Error for {item_id}: {error_name}: {e}")
                     continue
 
         return None
