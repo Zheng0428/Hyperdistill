@@ -20,4 +20,6 @@ class KimiProvider(BaseProvider):
         message = response.choices[0].message
         content = message.content or ""
         thinking = getattr(message, "reasoning", None)
+        if not thinking:
+            thinking = getattr(message, "reasoning_content", "")
         return content, thinking
