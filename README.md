@@ -83,7 +83,7 @@ bash run.sh
 ## 项目结构
 
 ```
-hyperdistill/
+Hyperdistill/
 ├── hyperdistill/              # 核心包
 │   ├── config.py                  # API 配置加载
 │   ├── utils.py                   # 日志、ID 生成
