@@ -4,7 +4,7 @@
 
 原项目 `/volume/pt-coder/users/tuney/Script/raw2qa_new/` 包含 7+ 个 Python 脚本和 14+ 个 Shell 脚本，用于 LLM 数据蒸馏。这些脚本共享 ~80% 的代码（API client 管理、断点续跑/去重、输出分片、进度追踪），但在输入格式、prompt 构建、provider 差异、过滤规则上各不相同，导致维护困难、新增任务容易出错。
 
-决定在 `/volume/pt-coder/users/tuney/Script/hyperdistill/` 创建模块化、可扩展的统一框架。
+决定在 `/volume/pt-coder/users/tuney/Script/Hyperdistill/` 创建模块化、可扩展的统一框架。
 
 ---
 
@@ -150,7 +150,7 @@ for item in stream:
 ## 最终文件清单
 
 ```
-hyperdistill/
+Hyperdistill/
 ├── hyperdistill/
 │   ├── __init__.py
 │   ├── config.py                    # API 配置加载

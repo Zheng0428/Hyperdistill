@@ -12,7 +12,7 @@ The hyperdistill now supports a modular agent and skill system for the CLI backe
 ## Directory Structure
 
 ```
-hyperdistill/
+Hyperdistill/
 ├── agents/                          # Your agent definitions
 │   ├── example_agent.md
 │   └── stackoverflow_enhancer.md
