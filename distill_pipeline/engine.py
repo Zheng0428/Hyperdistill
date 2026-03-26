@@ -185,6 +185,8 @@ class DistillEngine:
 
         This avoids the "batch stall at 5000" problem.
         """
+        import time
+
         # Step 1: Get fast input count for resume progress check
         log(f"Loading input data from: {self.input_file}")
         loader = get_loader(
@@ -211,7 +213,15 @@ class DistillEngine:
         submitted_count = 0
         stop_flag = False
 
-        pbar = tqdm(desc="Processing", unit="item")
+        # Track resume baseline for global progress
+        resumed_count = len(self.writer.processed_ids)
+        start_time = time.time()
+
+        pbar = tqdm(desc="Processing", unit="item", postfix={
+            'global': f'0/{input_total}',
+            'progress': '0.0%',
+            'eta': 'N/A'
+        })
 
         for item in self._stream_items():
             if stop_flag:
@@ -231,6 +241,8 @@ class DistillEngine:
                 if result:
                     self.writer.write(result)
                     processed_count += 1
+                    self._update_progress_bar(pbar, processed_count, resumed_count,
+                                             input_total, start_time)
                     if self._should_stop(processed_count, submitted_count):
                         stop_flag = True
                         break
@@ -248,6 +260,8 @@ class DistillEngine:
                     if result:
                         self.writer.write(result)
                         processed_count += 1
+                        self._update_progress_bar(pbar, processed_count, resumed_count,
+                                                 input_total, start_time)
                         if self._should_stop(processed_count, submitted_count):
                             stop_flag = True
                             break
@@ -261,6 +275,8 @@ class DistillEngine:
                 if result:
                     self.writer.write(result)
                     processed_count += 1
+                    self._update_progress_bar(pbar, processed_count, resumed_count,
+                                             input_total, start_time)
                     if self._should_stop(processed_count, submitted_count):
                         break
         elif pending and stop_flag:
@@ -273,6 +289,45 @@ class DistillEngine:
 
         pbar.close()
         log(f"Generation completed. Processed {processed_count}/{submitted_count} items.")
+
+    def _update_progress_bar(self, pbar, processed_count: int, resumed_count: int,
+                             input_total: int, start_time: float) -> None:
+        """Update progress bar with global progress information.
+
+        Args:
+            pbar: tqdm progress bar instance.
+            processed_count: Number of items processed in this session.
+            resumed_count: Number of items already processed (from resume).
+            input_total: Total number of items to process.
+            start_time: Start time of the processing (for ETA calculation).
+        """
+        import time
+
+        # Calculate global progress
+        global_processed = resumed_count + processed_count
+        global_progress = (global_processed / input_total * 100) if input_total > 0 else 0
+
+        # Calculate ETA
+        elapsed = time.time() - start_time
+        current_speed = processed_count / elapsed if elapsed > 0 else 0
+        remaining = input_total - global_processed
+        eta_seconds = remaining / current_speed if current_speed > 0 else 0
+
+        # Format ETA as HH:MM:SS
+        if eta_seconds > 0 and eta_seconds < 86400 * 365:  # Less than 1 year
+            hours = int(eta_seconds // 3600)
+            minutes = int((eta_seconds % 3600) // 60)
+            seconds = int(eta_seconds % 60)
+            eta_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        else:
+            eta_str = "N/A"
+
+        # Update postfix
+        pbar.set_postfix({
+            'global': f'{global_processed}/{input_total}',
+            'progress': f'{global_progress:.1f}%',
+            'eta': eta_str
+        })
 
     def _should_stop(self, processed_count: int, submitted_count: int) -> bool:
         """Check if we should stop early based on progress threshold."""
