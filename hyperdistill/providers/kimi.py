@@ -2,7 +2,7 @@
 Kimi provider.
 
 Kimi uses `enable_thinking: False` in extra_body and returns
-thinking via `message.reasoning_content`.
+thinking via `message.reasoning` field.
 """
 
 from typing import Any, Dict, Optional, Tuple
@@ -19,5 +19,5 @@ class KimiProvider(BaseProvider):
     def extract_response(self, response: Any) -> Tuple[str, Optional[str]]:
         message = response.choices[0].message
         content = message.content or ""
-        thinking = getattr(message, "reasoning_content", None)
+        thinking = getattr(message, "reasoning", None)
         return content, thinking
