@@ -10,8 +10,8 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from distill_pipeline.agents import AgentLoader, AgentRegistry
-from distill_pipeline.skills import SkillLoader, SkillRegistry
+from hyperdistill.agents import AgentLoader, AgentRegistry
+from hyperdistill.skills import SkillLoader, SkillRegistry
 
 
 def main():

@@ -1,4 +1,4 @@
-# Distill Pipeline
+# HyperDistill
 
 LLM 数据蒸馏框架 —— 模块化、可扩展、开箱即用。
 
@@ -83,8 +83,8 @@ bash run.sh
 ## 项目结构
 
 ```
-distill_pipeline/
-├── distill_pipeline/              # 核心包
+hyperdistill/
+├── hyperdistill/              # 核心包
 │   ├── config.py                  # API 配置加载
 │   ├── utils.py                   # 日志、ID 生成
 │   ├── engine.py                  # 核心异步引擎（Backend 无关）
@@ -280,13 +280,13 @@ python run.py --filter empty_response -i output.jsonl
 
 ```bash
 # 测试所有 provider
-python -m distill_pipeline.providers.test_providers
+python -m hyperdistill.providers.test_providers
 
 # 只测试指定 provider
-python -m distill_pipeline.providers.test_providers -p minimax glm
+python -m hyperdistill.providers.test_providers -p minimax glm
 
 # 每个 provider 只测试 1 个端点
-python -m distill_pipeline.providers.test_providers --max-endpoints 1
+python -m hyperdistill.providers.test_providers --max-endpoints 1
 ```
 
 ## 扩展开发
@@ -294,7 +294,7 @@ python -m distill_pipeline.providers.test_providers --max-endpoints 1
 ### 添加新 Backend
 
 ```python
-# distill_pipeline/backends/my_backend.py
+# hyperdistill/backends/my_backend.py
 from .base import BaseBackend
 
 class MyBackend(BaseBackend):
@@ -309,7 +309,7 @@ class MyBackend(BaseBackend):
 ### 添加新 Provider
 
 ```python
-# distill_pipeline/providers/my_provider.py
+# hyperdistill/providers/my_provider.py
 from .base import BaseProvider
 from .registry import ProviderRegistry
 
@@ -327,10 +327,10 @@ class MyProvider(BaseProvider):
 
 ### 添加新 Task
 
-在 `distill_pipeline/tasks/` 目录下新建 `.py` 文件，使用 `@TaskRegistry.register` 装饰器即可自动注册，无需手动修改 `__init__.py`：
+在 `hyperdistill/tasks/` 目录下新建 `.py` 文件，使用 `@TaskRegistry.register` 装饰器即可自动注册，无需手动修改 `__init__.py`：
 
 ```python
-# distill_pipeline/tasks/my_task.py
+# hyperdistill/tasks/my_task.py
 from .base import BaseTask
 from .registry import TaskRegistry
 
@@ -403,7 +403,7 @@ class MyTask(BaseTask):
 ### 添加新 DataLoader
 
 ```python
-# distill_pipeline/dataloader/csv_loader.py
+# hyperdistill/dataloader/csv_loader.py
 from .base import BaseDataLoader
 from .registry import DataLoaderRegistry
 

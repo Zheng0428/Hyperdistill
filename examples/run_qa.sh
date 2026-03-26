@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # 多轮对话蒸馏 - 所有轮次版本
-# 基于 distill_pipeline 框架
+# 基于 hyperdistill 框架
 
 INPUT_FILE=/volume/pt-coder/users/tuney/pretrain_data/stackoverflow/rewrite_qa/extracted_questions_parsed_10000.jsonl
 OUTPUT_FILE=/volume/pt-coder/users/tuney/pretrain_data/stackoverflow/rewrite_qa/extracted_questions_parsed_10000.distilled.jsonl
-CONFIG_FILE=/volume/pt-coder/users/tuney/Script/distill_pipeline/configs/config_glm.json
+CONFIG_FILE=/volume/pt-coder/users/tuney/Script/hyperdistill/configs/config_glm.json
 
 # 最大轮次限制（可选，不设置则处理所有轮次）
 MAX_TURNS=${MAX_TURNS:-}
@@ -36,7 +36,7 @@ echo "[INFO] Total lines: ${total_lines}"
 echo ""
 
 # 运行蒸馏
-cd /volume/pt-coder/users/tuney/Script/distill_pipeline
+cd /volume/pt-coder/users/tuney/Script/hyperdistill
 
 python run.py \
     --task query_response \

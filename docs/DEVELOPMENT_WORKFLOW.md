@@ -144,7 +144,7 @@ def new_function(param1: str, param2: int) -> dict:
 
 ### New Task Template
 ```python
-# distill_pipeline/tasks/my_task.py
+# hyperdistill/tasks/my_task.py
 from .base import BaseTask
 from .registry import TaskRegistry
 
@@ -188,7 +188,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from distill_pipeline.tasks import get_task
+from hyperdistill.tasks import get_task
 
 def test_my_task_basic():
     """Test basic functionality"""

@@ -11,8 +11,8 @@ import copy
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from distill_pipeline.tasks import TaskRegistry
-from distill_pipeline.tasks.synthesize_cli_content import SynthesizeCliContentTask, _NO_CONTENT_VALUES
+from hyperdistill.tasks import TaskRegistry
+from hyperdistill.tasks.synthesize_cli_content import SynthesizeCliContentTask, _NO_CONTENT_VALUES
 
 
 def make_conv(assistant_contents, include_tool_calls=True):

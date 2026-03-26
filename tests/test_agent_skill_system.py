@@ -8,8 +8,8 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from distill_pipeline.agents import AgentLoader, AgentRegistry
-from distill_pipeline.skills import SkillLoader, SkillRegistry
+from hyperdistill.agents import AgentLoader, AgentRegistry
+from hyperdistill.skills import SkillLoader, SkillRegistry
 
 
 def test_agent_loading():
@@ -100,22 +100,22 @@ def test_cli_backend_integration():
 
         # Need to mock the parent imports
         import sys
-        sys.modules['distill_pipeline.backends.base'] = type(sys)('mock')
-        sys.modules['distill_pipeline.backends.base'].BaseBackend = object
-        sys.modules['distill_pipeline.tasks.base'] = type(sys)('mock')
-        sys.modules['distill_pipeline.tasks.base'].BaseTask = object
-        sys.modules['distill_pipeline.utils'] = type(sys)('mock')
-        sys.modules['distill_pipeline.utils'].log = print
+        sys.modules['hyperdistill.backends.base'] = type(sys)('mock')
+        sys.modules['hyperdistill.backends.base'].BaseBackend = object
+        sys.modules['hyperdistill.tasks.base'] = type(sys)('mock')
+        sys.modules['hyperdistill.tasks.base'].BaseTask = object
+        sys.modules['hyperdistill.utils'] = type(sys)('mock')
+        sys.modules['hyperdistill.utils'].log = print
 
         # Import agents/skills directly
-        from distill_pipeline.agents import Agent, AgentRegistry
-        from distill_pipeline.skills import Skill, SkillRegistry
-        sys.modules['distill_pipeline.agents'] = type(sys)('mock')
-        sys.modules['distill_pipeline.agents'].Agent = Agent
-        sys.modules['distill_pipeline.agents'].AgentRegistry = AgentRegistry
-        sys.modules['distill_pipeline.skills'] = type(sys)('mock')
-        sys.modules['distill_pipeline.skills'].Skill = Skill
-        sys.modules['distill_pipeline.skills'].SkillRegistry = SkillRegistry
+        from hyperdistill.agents import Agent, AgentRegistry
+        from hyperdistill.skills import Skill, SkillRegistry
+        sys.modules['hyperdistill.agents'] = type(sys)('mock')
+        sys.modules['hyperdistill.agents'].Agent = Agent
+        sys.modules['hyperdistill.agents'].AgentRegistry = AgentRegistry
+        sys.modules['hyperdistill.skills'] = type(sys)('mock')
+        sys.modules['hyperdistill.skills'].Skill = Skill
+        sys.modules['hyperdistill.skills'].SkillRegistry = SkillRegistry
 
         spec.loader.exec_module(cli_backend_module)
         CliBackend = cli_backend_module.CliBackend

@@ -2,25 +2,25 @@
 
 ## Overview
 
-Successfully enhanced the `distill_pipeline` CLI backend with a modular agent and skill system for Claude Code.
+Successfully enhanced the `hyperdistill` CLI backend with a modular agent and skill system for Claude Code.
 
 ## What Was Added
 
 ### 1. Core Infrastructure
 
-**Agent System** (`distill_pipeline/agents/`):
+**Agent System** (`hyperdistill/agents/`):
 - `agent_loader.py` - Loads agent definitions from .md files with YAML frontmatter
 - `agent_registry.py` - Centralized agent management and registration
 - `__init__.py` - Public API exports
 
-**Skill System** (`distill_pipeline/skills/`):
+**Skill System** (`hyperdistill/skills/`):
 - `skill_loader.py` - Loads skill definitions from .md files with YAML frontmatter
 - `skill_registry.py` - Centralized skill management and registration
 - `__init__.py` - Public API exports
 
 ### 2. CLI Backend Integration
 
-Modified `distill_pipeline/backends/cli_backend.py`:
+Modified `hyperdistill/backends/cli_backend.py`:
 - Added agent/skill registry imports
 - Enhanced `__init__` to support:
   - `agent_name` - Load agent from registry
@@ -220,7 +220,7 @@ Potential improvements mentioned in documentation:
 
 ## Files Modified
 
-1. `distill_pipeline/backends/cli_backend.py` - Added agent/skill support
+1. `hyperdistill/backends/cli_backend.py` - Added agent/skill support
 2. `run.py` - Added CLI arguments
 3. `README.md` - Added usage examples
 4. `.claude/CLAUDE.md` - Updated architecture docs
@@ -228,12 +228,12 @@ Potential improvements mentioned in documentation:
 
 ## Files Created
 
-1. `distill_pipeline/agents/__init__.py`
-2. `distill_pipeline/agents/agent_loader.py`
-3. `distill_pipeline/agents/agent_registry.py`
-4. `distill_pipeline/skills/__init__.py`
-5. `distill_pipeline/skills/skill_loader.py`
-6. `distill_pipeline/skills/skill_registry.py`
+1. `hyperdistill/agents/__init__.py`
+2. `hyperdistill/agents/agent_loader.py`
+3. `hyperdistill/agents/agent_registry.py`
+4. `hyperdistill/skills/__init__.py`
+5. `hyperdistill/skills/skill_loader.py`
+6. `hyperdistill/skills/skill_registry.py`
 7. `agents/example_agent.md`
 8. `agents/stackoverflow_enhancer.md`
 9. `skills/code_analyzer.md`

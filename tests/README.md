@@ -61,5 +61,5 @@ python tests/test_providers.py
    import os
    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
    ```
-2. 从 `distill_pipeline` 包导入模块
+2. 从 `hyperdistill` 包导入模块
 3. 使用清晰的测试函数名和文档字符串

@@ -8,22 +8,22 @@ Provider 端到端测试脚本。
 
 用法:
   # 测试所有已注册的 provider（自动匹配 configs/config_{name}.json）
-  python -m distill_pipeline.providers.test_providers
+  python -m hyperdistill.providers.test_providers
 
   # 只测试指定 provider
-  python -m distill_pipeline.providers.test_providers --provider kimi minimax
+  python -m hyperdistill.providers.test_providers --provider kimi minimax
 
   # 指定配置文件目录
-  python -m distill_pipeline.providers.test_providers --config-dir /path/to/configs
+  python -m hyperdistill.providers.test_providers --config-dir /path/to/configs
 
   # 指定单个配置文件测试某个 provider
-  python -m distill_pipeline.providers.test_providers --provider kimi --config /path/to/config.json
+  python -m hyperdistill.providers.test_providers --provider kimi --config /path/to/config.json
 
   # 详细输出（显示完整 response）
-  python -m distill_pipeline.providers.test_providers --verbose
+  python -m hyperdistill.providers.test_providers --verbose
 
   # 自定义 prompt
-  python -m distill_pipeline.providers.test_providers --prompt "Write a hello world in Python"
+  python -m hyperdistill.providers.test_providers --prompt "Write a hello world in Python"
 """
 
 import argparse
@@ -40,8 +40,8 @@ from openai import AsyncOpenAI
 # 确保能找到 distill_pipeline 包
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from distill_pipeline.providers.registry import ProviderRegistry, get_provider
-from distill_pipeline.config import load_config
+from hyperdistill.providers.registry import ProviderRegistry, get_provider
+from hyperdistill.config import load_config
 
 
 # ============================================================
@@ -393,19 +393,19 @@ def main():
         epilog="""
 示例:
   # 测试所有 provider
-  python -m distill_pipeline.providers.test_providers
+  python -m hyperdistill.providers.test_providers
 
   # 只测试 kimi 和 minimax
-  python -m distill_pipeline.providers.test_providers --provider kimi minimax
+  python -m hyperdistill.providers.test_providers --provider kimi minimax
 
   # 指定配置文件
-  python -m distill_pipeline.providers.test_providers --provider kimi --config /path/to/config.json
+  python -m hyperdistill.providers.test_providers --provider kimi --config /path/to/config.json
 
   # 详细输出
-  python -m distill_pipeline.providers.test_providers --verbose
+  python -m hyperdistill.providers.test_providers --verbose
 
   # 每个 provider 只测试第一个端点
-  python -m distill_pipeline.providers.test_providers --max-endpoints 1
+  python -m hyperdistill.providers.test_providers --max-endpoints 1
         """,
     )
     parser.add_argument(

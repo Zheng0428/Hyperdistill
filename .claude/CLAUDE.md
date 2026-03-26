@@ -1,7 +1,7 @@
-# Distill Pipeline — Project Context
+# HyperDistill — Project Context
 
 ## Project Location
-`/volume/pt-coder/users/tuney/Script/distill_pipeline/`
+`/volume/pt-coder/users/tuney/Script/hyperdistill/`
 
 ## Overview
 Modular LLM data distillation framework supporting dual execution backends: API (AsyncOpenAI) and CLI (subprocess agent via `claude --bare`).
@@ -106,7 +106,7 @@ The following are recommended but not mandatory. Developers should assess based 
 
 ```bash
 # 1. Implement feature
-vim distill_pipeline/tasks/new_task.py
+vim hyperdistill/tasks/new_task.py
 # Add docstrings
 
 # 2. Update README.md
@@ -208,7 +208,7 @@ git commit -m "Add my_new_task"
 
 ## Project Structure
 ```
-distill_pipeline/
+hyperdistill/
 ├── .claude/
 │   └── CLAUDE.md                # Project context (this file)
 ├── README.md                    # User documentation (primary entry point)
@@ -229,7 +229,7 @@ distill_pipeline/
 ├── agents/                      # Agent definitions
 ├── skills/                      # Skill definitions
 ├── configs/                     # API configurations
-└── distill_pipeline/            # Core package
+└── hyperdistill/            # Core package
     ├── agents/
     ├── skills/
     ├── backends/

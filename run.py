@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Distill Pipeline - Unified CLI Entry Point
+HyperDistill - Unified CLI Entry Point
 
 Usage:
   # API backend (default)
@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Distill Pipeline - LLM Data Distillation Framework",
+        description="HyperDistill - LLM Data Distillation Framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -199,9 +199,9 @@ Examples:
 
 def cmd_list():
     """List all available components."""
-    from distill_pipeline.tasks import TaskRegistry
-    from distill_pipeline.providers import ProviderRegistry
-    from distill_pipeline.filters import FILTER_REGISTRY
+    from hyperdistill.tasks import TaskRegistry
+    from hyperdistill.providers import ProviderRegistry
+    from hyperdistill.filters import FILTER_REGISTRY
 
     print("=" * 55)
     print("Available Tasks:")
@@ -223,7 +223,7 @@ def cmd_list():
 
 
 def cmd_health_check(args):
-    from distill_pipeline.health_check import run_health_check
+    from hyperdistill.health_check import run_health_check
     if not args.config:
         print("Error: --config is required for health check")
         sys.exit(1)
@@ -235,7 +235,7 @@ def cmd_health_check(args):
 
 
 def cmd_filter(args):
-    from distill_pipeline.filters import get_filter
+    from hyperdistill.filters import get_filter
     if not args.input:
         print("Error: -i/--input is required for filtering")
         sys.exit(1)
@@ -246,12 +246,12 @@ def cmd_filter(args):
 
 def _build_api_backend(args):
     """Build ApiBackend from CLI args."""
-    from distill_pipeline.config import (
+    from hyperdistill.config import (
         load_config, build_api_configs_from_args, parse_concurrencies,
     )
-    from distill_pipeline.providers import get_provider
-    from distill_pipeline.client_pool import ClientPool
-    from distill_pipeline.backends import ApiBackend
+    from hyperdistill.providers import get_provider
+    from hyperdistill.client_pool import ClientPool
+    from hyperdistill.backends import ApiBackend
 
     # Load API configs
     api_configs = None
@@ -313,7 +313,7 @@ def _build_api_backend(args):
 
 def _build_cli_backend(args):
     """Build CliBackend from CLI args."""
-    from distill_pipeline.backends import CliBackend
+    from hyperdistill.backends import CliBackend
 
     # Auto workers for CLI (lower default — each subprocess is heavier)
     if args.workers is None:
@@ -343,10 +343,10 @@ def _build_cli_backend(args):
 
 def cmd_distill(args):
     """Run the distillation pipeline."""
-    from distill_pipeline.tasks import get_task
-    from distill_pipeline.output_writer import OutputWriter
-    from distill_pipeline.engine import DistillEngine
-    from distill_pipeline.utils import log
+    from hyperdistill.tasks import get_task
+    from hyperdistill.output_writer import OutputWriter
+    from hyperdistill.engine import DistillEngine
+    from hyperdistill.utils import log
 
     # Validate required args
     if not args.task:
@@ -361,7 +361,7 @@ def cmd_distill(args):
 
     # Print config
     print("=" * 55)
-    print("Distill Pipeline Configuration")
+    print("HyperDistill Configuration")
     print("=" * 55)
     for arg in vars(args):
         val = getattr(args, arg)

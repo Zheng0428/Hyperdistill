@@ -2,7 +2,7 @@
 
 ## Overview
 
-The distill_pipeline now supports a modular agent and skill system for the CLI backend. This allows you to:
+The hyperdistill now supports a modular agent and skill system for the CLI backend. This allows you to:
 
 - **Define agents**: Pre-configured agent personas with specific instructions and models
 - **Define skills**: Reusable capabilities that can be loaded into agents
@@ -12,14 +12,14 @@ The distill_pipeline now supports a modular agent and skill system for the CLI b
 ## Directory Structure
 
 ```
-distill_pipeline/
+hyperdistill/
 ├── agents/                          # Your agent definitions
 │   ├── example_agent.md
 │   └── stackoverflow_enhancer.md
 ├── skills/                          # Your skill definitions
 │   ├── code_analyzer.md
 │   └── data_validator.md
-└── distill_pipeline/
+└── hyperdistill/
     ├── agents/                      # Agent system code
     │   ├── __init__.py
     │   ├── agent_loader.py
@@ -121,9 +121,9 @@ python run.py --task query_response --backend cli \
 ## Programmatic Usage
 
 ```python
-from distill_pipeline.agents import AgentLoader, AgentRegistry
-from distill_pipeline.skills import SkillLoader, SkillRegistry
-from distill_pipeline.backends.cli_backend import CliBackend
+from hyperdistill.agents import AgentLoader, AgentRegistry
+from hyperdistill.skills import SkillLoader, SkillRegistry
+from hyperdistill.backends.cli_backend import CliBackend
 
 # Load agents and skills
 AgentRegistry.load_from_directory("agents")
