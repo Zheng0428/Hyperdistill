@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from .base import BaseTask
 from .registry import TaskRegistry
-
+import random
 
 @TaskRegistry.register
 class QueryResponseTask(BaseTask):
@@ -25,7 +25,8 @@ class QueryResponseTask(BaseTask):
         return ["id"]
 
     def build_messages(self, item: Dict[str, Any]) -> List[Dict[str, str]]:
-        return [{"role": "user", "content": item["body"]}]
+        content = random.choice([item["body"], item["question"]])
+        return [{"role": "user", "content": content}]
 
     def process_result(
         self,
