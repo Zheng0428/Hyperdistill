@@ -123,7 +123,7 @@ class SynthesizeCliThinkingTask(BaseTask):
         """Stable ID seed: hash of the first user message content."""
         content = ""
         for msg in messages:
-            content = content + "\n" + msg.get("content", "")
+            content = content + "\n" +msg.get("content", "")
         return generate_id(content)
 
     def _assistant_turns(self, messages: List[Dict]) -> List[Tuple[int, int]]:
@@ -139,10 +139,10 @@ class SynthesizeCliThinkingTask(BaseTask):
                 continue
             content = msg.get("content", "")
             text = self._extract_text(content) if not isinstance(content, str) else content
-            # if text.strip():
-            ass_turn += 1
-            result.append((i, ass_turn))
-            turn_idx_map[ass_turn] = i
+            if text.strip():
+                ass_turn += 1
+                result.append((i, ass_turn))
+                turn_idx_map[ass_turn] = i
         return result, turn_idx_map
 
     @staticmethod
@@ -257,12 +257,12 @@ class SynthesizeCliThinkingTask(BaseTask):
 
     def get_id(self, item: Dict[str, Any]) -> str:
         md5 = item.get("md5", "")
-        ass_turn_idx = item.get("ass_turn_idx", 1)
-        return f"{md5}:{ass_turn_idx}"
+        msg_turn_idx = item.get("msg_turn_idx", 1)
+        return f"{md5}:{msg_turn_idx}"
 
     def get_id_fields(self) -> Optional[List[str]]:
-        """Compose ID from md5 and ass_turn_idx."""
-        return ["md5", "ass_turn_idx"]
+        """Compose ID from md5 and msg_turn_idx."""
+        return ["md5", "msg_turn_idx"]
 
     def expand_items(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Expand one conversation into one item per non-empty assistant turn."""
@@ -271,15 +271,14 @@ class SynthesizeCliThinkingTask(BaseTask):
         if not messages:
             return []
 
-        turns, _ = self._assistant_turns(messages)
-        if not turns:
-            return []
-
         expanded = []
-        for _msg_idx, ass_turn_idx in turns:
+        for _msg_idx, msg in enumerate(messages):
+            if msg.get("role") != "assistant":
+                continue
             expanded_item = copy.deepcopy(item)
-            expanded_item["ass_turn_idx"] = ass_turn_idx
-            if item["messages"][_msg_idx].get("reasoning_content") is None:
+            expanded_item["msg_turn_idx"] = _msg_idx
+
+            if msg.get("reasoning_content") is None:
                 expanded.append(expanded_item)
         return expanded
 
@@ -290,21 +289,16 @@ class SynthesizeCliThinkingTask(BaseTask):
         target assistant response. Detects language to pick prompt.
         """
         messages = item.get("messages", [])
-        ass_turn_idx = item.get("ass_turn_idx", 1)
-
-        turns, _ = self._assistant_turns(messages)
-        target_msg_idx = next(
-            (msg_idx for msg_idx, t in turns if t == ass_turn_idx), -1
-        )
-        if target_msg_idx == -1:
+        msg_turn_idx = item.get("msg_turn_idx", None)
+        if msg_turn_idx is None:
             return []
 
         # Detect language from the target assistant content
-        target_content = self._extract_text(messages[target_msg_idx].get("content", ""))
+        target_content = self._extract_text(messages[msg_turn_idx].get("content", ""))
         lang = self._detect_lang(target_content)
 
-        context = self._format_context(messages, target_msg_idx, lang)
-        target_response = self._format_target_response(messages[target_msg_idx], lang)
+        context = self._format_context(messages, msg_turn_idx, lang)
+        target_response = self._format_target_response(messages[msg_turn_idx], lang)
 
         sys_prompt = SYNTH_SYSTEM_PROMPT_ZH if lang == "zh" else SYNTH_SYSTEM_PROMPT_EN
         usr_template = USER_PROMPT_TEMPLATE_ZH if lang == "zh" else USER_PROMPT_TEMPLATE_EN
@@ -331,18 +325,15 @@ class SynthesizeCliThinkingTask(BaseTask):
         assistant message's reasoning_content and normalized content.
         """
         messages = item.get("messages", [])
-        ass_turn_idx = item.get("ass_turn_idx", 1)
-
-        _, turn_idx_map = self._assistant_turns(messages)
-        target_msg_idx = turn_idx_map.get(ass_turn_idx)
-        if target_msg_idx is None:
+        msg_turn_idx = item.get("msg_turn_idx", None)
+        if msg_turn_idx is None:
             return None
 
         # Parse <answer> tag
         match = _ANSWER_RE.search(content or "")
         synth = match.group(1).strip() if match else (content or "").strip()
 
-        msg = messages[target_msg_idx]
+        msg = messages[msg_turn_idx]
 
         # Normalize content: list → join with \n
         original_content = msg.get("content", "")
@@ -350,34 +341,23 @@ class SynthesizeCliThinkingTask(BaseTask):
             original_content = self._extract_text(original_content)
 
         # Add reasoning_content to the target message
-        msg["content"] = original_content
+        # msg["content"] = original_content
         msg["reasoning_content"] = synth
 
         item["messages"] = messages
-        item["target_msg_idx"] = target_msg_idx
-
-        import pdb; pdb.set_trace()
-
         return item
 
     def validate_item(self, item: Dict[str, Any]) -> bool:
-        if "md5" not in item or "messages" not in item or "ass_turn_idx" not in item:
+        if "md5" not in item or "messages" not in item or "msg_turn_idx" not in item:
             return False
         
         messages = item.get("messages")
         if not messages:
             return False
 
-        # check for reasoning_content
-
-        ass_turn_idx = item.get("ass_turn_idx")
-        if ass_turn_idx is None:
-            return False
-        
-        # ass_turn_idx -> turn_idx -> turn_message
-        _, turn_idx_map = self._assistant_turns(messages)
-        turn_idx = turn_idx_map.get(ass_turn_idx, None)
-        if turn_idx is None:
+        # check for reasoning_content 
+        msg_turn_idx = item.get("msg_turn_idx")
+        if msg_turn_idx is None:
             return False
 
         # turn_message = messages[turn_idx]
