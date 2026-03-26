@@ -25,7 +25,7 @@ class QueryResponseTask(BaseTask):
         return ["id"]
 
     def build_messages(self, item: Dict[str, Any]) -> List[Dict[str, str]]:
-        return [{"role": "user", "content": item["question"]}]
+        return [{"role": "user", "content": item["body"]}]
 
     def process_result(
         self,
@@ -38,4 +38,10 @@ class QueryResponseTask(BaseTask):
         return item
 
     def validate_item(self, item: Dict[str, Any]) -> bool:
-        return "id" in item and "question" in item and bool(item.get("question"))
+        return (
+            "id" in item
+            and "body" in item
+            and bool(item.get("body"))
+            and "question" in item
+            and bool(item.get("question"))
+        )
