@@ -1,7 +1,7 @@
 # HyperDistill — Project Context
 
 ## Project Location
-`/volume/pt-coder/users/tuney/Script/hyperdistill/`
+`/volume/pt-coder/users/tuney/Script/Hyperdistill/`
 
 ## Overview
 Modular LLM data distillation framework supporting dual execution backends: API (AsyncOpenAI) and CLI (subprocess agent via `claude --bare`).
@@ -208,7 +208,7 @@ git commit -m "Add my_new_task"
 
 ## Project Structure
 ```
-hyperdistill/
+Hyperdistill/
 ├── .claude/
 │   └── CLAUDE.md                # Project context (this file)
 ├── README.md                    # User documentation (primary entry point)
