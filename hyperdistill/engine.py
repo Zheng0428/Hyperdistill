@@ -243,7 +243,7 @@ class DistillEngine:
                     processed_count += 1
                     self._update_progress_bar(pbar, processed_count, resumed_count,
                                              input_total, start_time)
-                    if self._should_stop(processed_count, submitted_count):
+                    if self._should_stop(processed_count, resumed_count, input_total):
                         stop_flag = True
                         break
 
@@ -262,7 +262,7 @@ class DistillEngine:
                         processed_count += 1
                         self._update_progress_bar(pbar, processed_count, resumed_count,
                                                  input_total, start_time)
-                        if self._should_stop(processed_count, submitted_count):
+                        if self._should_stop(processed_count, resumed_count, input_total):
                             stop_flag = True
                             break
 
@@ -277,7 +277,7 @@ class DistillEngine:
                     processed_count += 1
                     self._update_progress_bar(pbar, processed_count, resumed_count,
                                              input_total, start_time)
-                    if self._should_stop(processed_count, submitted_count):
+                    if self._should_stop(processed_count, resumed_count, input_total):
                         break
         elif pending and stop_flag:
             # Cancel remaining tasks on early stop
@@ -329,9 +329,20 @@ class DistillEngine:
             'eta': eta_str
         })
 
-    def _should_stop(self, processed_count: int, submitted_count: int) -> bool:
-        """Check if we should stop early based on progress threshold."""
-        if submitted_count == 0 or self.progress_threshold >= 100:
+    def _should_stop(self, processed_count: int, resumed_count: int, input_total: int) -> bool:
+        """Check if we should stop early based on global progress threshold.
+
+        Args:
+            processed_count: Number of items processed in this session.
+            resumed_count: Number of items already processed (from resume).
+            input_total: Total number of items in the input file.
+
+        Returns:
+            True if global progress >= progress_threshold, False otherwise.
+        """
+        if self.progress_threshold >= 100 or input_total == 0:
             return False
-        threshold_count = int(submitted_count * (self.progress_threshold / 100))
-        return threshold_count > 0 and processed_count >= threshold_count
+
+        global_processed = resumed_count + processed_count
+        global_progress = (global_processed / input_total) * 100
+        return global_progress >= self.progress_threshold
