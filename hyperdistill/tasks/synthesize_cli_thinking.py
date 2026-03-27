@@ -176,7 +176,7 @@ class SynthesizeCliThinkingTask(BaseTask):
         alpha_count = sum(1 for ch in text if ch.isalpha())
         if alpha_count == 0:
             return "zh" if cjk_count > 0 else "en"
-        return "zh" if cjk_count / alpha_count > 0.1 else "en"
+        return "zh" if cjk_count / alpha_count > 0.01 else "en"
 
     @staticmethod
     def _summarize_tool_calls(tool_calls: List[Dict], lang: str = "zh") -> str:
@@ -204,6 +204,15 @@ class SynthesizeCliThinkingTask(BaseTask):
             parts.append(f"{name}({brief})" if brief else name)
         label = "调用工具" if lang == "zh" else "Tool calls"
         return f"[{label}: {', '.join(parts)}]"
+
+    def _detect_lang_from_user(self, messages: List[Dict], before_idx: int) -> str:
+        """Detect language by looking at the most recent user message before before_idx."""
+        for i in range(before_idx - 1, -1, -1):
+            if messages[i].get("role") == "user":
+                text = self._extract_text(messages[i].get("content", ""))
+                if text.strip():
+                    return self._detect_lang(text)
+        return "en"
 
     def _format_context(self, messages: List[Dict], target_msg_idx: int, lang: str = "zh") -> str:
         """Format all messages before the target turn as structured context."""
@@ -275,11 +284,20 @@ class SynthesizeCliThinkingTask(BaseTask):
         for _msg_idx, msg in enumerate(messages):
             if msg.get("role") != "assistant":
                 continue
-            expanded_item = copy.deepcopy(item)
-            expanded_item["msg_turn_idx"] = _msg_idx
-
-            if msg.get("reasoning_content") is None:
+            reasoning = msg.get("reasoning_content")
+            if reasoning is None:
+                # No reasoning yet — needs synthesis
+                expanded_item = copy.deepcopy(item)
+                expanded_item["msg_turn_idx"] = _msg_idx
                 expanded.append(expanded_item)
+            else:
+                # Has reasoning — re-synthesize if language mismatches user content
+                expected_lang = self._detect_lang_from_user(messages, _msg_idx)
+                actual_lang = self._detect_lang(reasoning)
+                if actual_lang != expected_lang:
+                    expanded_item = copy.deepcopy(item)
+                    expanded_item["msg_turn_idx"] = _msg_idx
+                    expanded.append(expanded_item)
         return expanded
 
     def build_messages(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -293,9 +311,8 @@ class SynthesizeCliThinkingTask(BaseTask):
         if msg_turn_idx is None:
             return []
 
-        # Detect language from the target assistant content
-        target_content = self._extract_text(messages[msg_turn_idx].get("content", ""))
-        lang = self._detect_lang(target_content)
+        # Detect language from the most recent user message before this turn
+        lang = self._detect_lang_from_user(messages, msg_turn_idx)
 
         context = self._format_context(messages, msg_turn_idx, lang)
         target_response = self._format_target_response(messages[msg_turn_idx], lang)
