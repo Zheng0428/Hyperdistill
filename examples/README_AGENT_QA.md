@@ -15,12 +15,13 @@ examples/
 
 配套文件（在项目根目录）：
 ```
-agents/
-├── qa_expert.md                    # Q&A 专家 Agent
+.claude/agents/
+├── qa-expert.md                    # Q&A 专家 Agent
 └── ...
 
-skills/
-├── enhanced_response_generation.md # 增强回复生成 Skill
+.claude/skills/
+├── enhanced-response-generation/
+│   └── SKILL.md                    # 增强回复生成 Skill
 └── ...
 ```
 
@@ -35,8 +36,8 @@ cd examples
 
 INPUT_FILE=sample_qa_input.jsonl \
 OUTPUT_FILE=output_qa_results.jsonl \
-AGENTS_DIR=../agents \
-SKILLS_DIR=../skills \
+AGENTS_DIR=../.claude/agents \
+SKILLS_DIR=../.claude/skills \
 bash run_qa_agent.sh
 ```
 
@@ -45,8 +46,8 @@ bash run_qa_agent.sh
 ```bash
 INPUT_FILE=examples/sample_qa_input.jsonl \
 OUTPUT_FILE=output/qa_results.jsonl \
-AGENTS_DIR=./agents \
-SKILLS_DIR=./skills \
+AGENTS_DIR=./.claude/agents \
+SKILLS_DIR=./.claude/skills \
 bash examples/run_qa_agent.sh
 ```
 
@@ -88,9 +89,9 @@ bash run_qa_agent_example.sh
 | `INPUT_FILE` | 必填 | 输入 JSONL 文件 |
 | `OUTPUT_FILE` | 必填 | 输出 JSONL 文件 |
 | `AGENT_NAME` | `qa-expert` | Agent 名称 |
-| `AGENTS_DIR` | `./agents` | Agent 目录（相对于脚本位置） |
+| `AGENTS_DIR` | `../.claude/agents` | Agent 目录（相对于脚本位置） |
 | `SKILLS` | `enhanced-response-generation` | Skill 列表（逗号分隔） |
-| `SKILLS_DIR` | `./skills` | Skill 目录（相对于脚本位置） |
+| `SKILLS_DIR` | `../.claude/skills` | Skill 目录（相对于脚本位置） |
 | `CLI_MODEL` | `sonnet` | 模型名称 |
 | `WORKERS` | `4` | 并发数 |
 
@@ -141,7 +142,7 @@ cat AGENT_EXAMPLE_README.md
 
 ```bash
 # 查看可用 agents
-ls -1 ../agents/*.md
+ls -1 ../.claude/agents/*.md
 
 # 使用指定 agent
 AGENT_NAME=my-custom-agent bash run_qa_agent.sh
@@ -199,8 +200,8 @@ bash run_qa_agent.sh
 ## ⚠️ 注意事项
 
 1. **路径问题**：
-   - 从 examples 目录运行时，使用 `AGENTS_DIR=../agents`
-   - 从根目录运行时，使用 `AGENTS_DIR=./agents`
+   - 从 examples 目录运行时，使用 `AGENTS_DIR=../.claude/agents`
+   - 从根目录运行时，使用 `AGENTS_DIR=./.claude/agents`
 
 2. **并发控制**：
    - 建议从小并发开始测试（2-4）
@@ -264,8 +265,8 @@ Async/await is a modern syntax for handling asynchronous operations...
    ```bash
    INPUT_FILE=your_input.jsonl \
    OUTPUT_FILE=your_output.jsonl \
-   AGENTS_DIR=../agents \
-   SKILLS_DIR=../skills \
+   AGENTS_DIR=../.claude/agents \
+   SKILLS_DIR=../.claude/skills \
    bash run_qa_agent.sh
    ```
 

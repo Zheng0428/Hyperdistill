@@ -18,8 +18,8 @@ echo ""
 
 INPUT_FILE="sample_qa_input.jsonl" \
 OUTPUT_FILE="output_qa_basic.jsonl" \
-AGENTS_DIR="../agents" \
-SKILLS_DIR="../skills" \
+AGENTS_DIR="../.claude/agents" \
+SKILLS_DIR="../.claude/skills" \
 WORKERS=2 \
 bash run_qa_agent.sh
 
@@ -36,9 +36,9 @@ echo ""
 INPUT_FILE="sample_qa_input.jsonl" \
 OUTPUT_FILE="output_qa_custom.jsonl" \
 AGENT_NAME="qa-expert" \
-AGENTS_DIR="../agents" \
+AGENTS_DIR="../.claude/agents" \
 SKILLS="enhanced-response-generation,data-validator" \
-SKILLS_DIR="../skills" \
+SKILLS_DIR="../.claude/skills" \
 WORKERS=2 \
 bash run_qa_agent.sh
 
@@ -54,8 +54,8 @@ echo ""
 
 INPUT_FILE="sample_qa_input.jsonl" \
 OUTPUT_FILE="output_qa_opus.jsonl" \
-AGENTS_DIR="../agents" \
-SKILLS_DIR="../skills" \
+AGENTS_DIR="../.claude/agents" \
+SKILLS_DIR="../.claude/skills" \
 CLI_MODEL="opus" \
 WORKERS=2 \
 bash run_qa_agent.sh
@@ -75,9 +75,9 @@ OUTPUT_FILE="output_qa_full.jsonl" \
 BACKEND="cli" \
 TASK="query_response" \
 AGENT_NAME="qa-expert" \
-AGENTS_DIR="../agents" \
+AGENTS_DIR="../.claude/agents" \
 SKILLS="enhanced-response-generation" \
-SKILLS_DIR="../skills" \
+SKILLS_DIR="../.claude/skills" \
 CLI_CMD="claude" \
 CLI_MODEL="sonnet" \
 CLI_TIMEOUT=600 \

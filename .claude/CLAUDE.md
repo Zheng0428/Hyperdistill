@@ -19,8 +19,8 @@ Engine (sliding-window concurrency)
 
 ## Key Modules
 - **backends/**: BaseBackend ABC with ApiBackend and CliBackend implementations
-- **agents/**: Agent loading, registry, YAML frontmatter parsing for CLI backend
-- **skills/**: Skill loading, registry, dynamic injection for CLI backend
+- **hyperdistill/agents/**: Agent loading, registry, YAML frontmatter parsing for CLI backend
+- **hyperdistill/skills/**: Skill loading, registry, dynamic injection for CLI backend
 - **dataloader/**: Streaming JSONL/Parquet loaders with auto-detection by extension
 - **providers/**: API provider implementations (Kimi, DeepSeek, GLM, MiniMax, Default)
 - **tasks/**: Task implementations (query_response, code_to_question, text_to_response, stackoverflow, multiturn_distill, multiturn_all_distill, synthesize_cli_thinking, synthesize_cli_content)
@@ -39,8 +39,8 @@ Engine (sliding-window concurrency)
 
 ## Configuration
 - `configs/config_{provider}.json` - API endpoint configurations
-- `agents/*.md` - Agent definitions with YAML frontmatter
-- `skills/*.md` - Skill definitions with YAML frontmatter
+- `.claude/agents/*.md` - Agent definitions with YAML frontmatter
+- `.claude/skills/<skill-name>/SKILL.md` - Claude-style skill definitions
 
 ## CLI Usage
 ```bash
@@ -48,7 +48,7 @@ Engine (sliding-window concurrency)
 python run.py --task <task> --backend api --provider <provider> --config <config.json> -i <input> -o <output>
 
 # CLI backend with agent/skill system
-python run.py --task <task> --backend cli --agent-name <agent> --agents-dir ./agents --skills <skill1>,<skill2> --skills-dir ./skills -i <input> -o <output>
+python run.py --task <task> --backend cli --agent-name <agent> --skills <skill1>,<skill2> -i <input> -o <output>
 
 # CLI backend (legacy mode)
 python run.py --task <task> --backend cli --cli-model <model> --agent-instructions <agent.md> -i <input> -o <output>
@@ -210,7 +210,9 @@ git commit -m "Add my_new_task"
 ```
 Hyperdistill/
 ├── .claude/
-│   └── CLAUDE.md                # Project context (this file)
+│   ├── CLAUDE.md                # Project context (this file)
+│   ├── agents/                  # Agent definitions
+│   └── skills/                  # Claude-style skill definitions
 ├── README.md                    # User documentation (primary entry point)
 ├── run.py / run.sh              # Entry points
 ├── requirements.txt
@@ -226,8 +228,6 @@ Hyperdistill/
 ├── examples/                    # Usage examples
 │   ├── README_AGENT_QA.md
 │   └── run_qa_agent.sh
-├── agents/                      # Agent definitions
-├── skills/                      # Skill definitions
 ├── configs/                     # API configurations
 └── hyperdistill/            # Core package
     ├── agents/

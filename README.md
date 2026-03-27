@@ -41,9 +41,7 @@ python run.py \
   --task stackoverflow \
   --backend cli \
   --agent-name stackoverflow-enhancer \
-  --agents-dir ./agents \
   --skills code-analyzer,data-validator \
-  --skills-dir ./skills \
   -i /path/to/input.jsonl \
   -o /path/to/output.jsonl \
   -w 4
@@ -59,13 +57,12 @@ python run.py \
   -w 4
 
 # 使用自定义 API 端点
-ANTHROPIC_BASE_URL="https://your-endpoint.com" \
+export ANTHROPIC_BASE_URL=https://siflow-longmen.siflow.cn/siflow/longmen/skyinfer/gji/minimax-m2-5/1/8000/v1  \
 ANTHROPIC_API_KEY="sk-xxx" \
 python run.py \
   --task stackoverflow \
   --backend cli \
   --agent-name stackoverflow-enhancer \
-  --agents-dir ./agents \
   -i input.jsonl -o output.jsonl
 ```
 
@@ -123,14 +120,19 @@ Hyperdistill/
 │       ├── multiturn_all_distill.py #  多轮对话蒸馏（所有轮次，逐轮展开）
 │       ├── synthesize_cli_thinking.py # CLI 对话 thinking 合成
 │       └── registry.py            #   Task 注册表
-├── agents/                        # Agent 定义文件（.md）
-│   ├── example_agent.md
-│   ├── qa_expert.md
-│   └── stackoverflow_enhancer.md
-├── skills/                        # Skill 定义文件（.md）
-│   ├── code_analyzer.md
-│   ├── data_validator.md
-│   └── enhanced_response_generation.md
+├── .claude/                       # Claude Code project configuration
+│   ├── CLAUDE.md                  # 项目上下文
+│   ├── agents/                    # Agent / subagent 定义文件（.md）
+│   │   ├── example-agent.md
+│   │   ├── qa-expert.md
+│   │   └── stackoverflow-enhancer.md
+│   └── skills/                    # Claude-style skills
+│       ├── code-analyzer/
+│       │   └── SKILL.md
+│       ├── data-validator/
+│       │   └── SKILL.md
+│       └── enhanced-response-generation/
+│           └── SKILL.md
 ├── configs/                       # API 配置文件
 ├── examples/                      # 示例脚本
 │   ├── run_qa_agent.sh
@@ -175,6 +177,7 @@ Engine._process_item(item)
 | `multiturn_all_distill` | 多轮对话蒸馏（所有轮次，逐轮展开） | `md5`, `messages` | `messages`, `thinking`（每轮一条记录） |
 | `synthesize_cli_thinking` | 为 CLI Agent 对话的每个 assistant 回复合成 thinking | `md5`, `messages` | `messages`（含 `reasoning_content`） |
 | `synthesize_cli_content` | 为 CLI Agent 对话中 `"(no content)"` 的 assistant 回复合成文字内容 | `md5`, `messages` | `messages`（`"(no content)"` 替换为合成文本） |
+| `analyze_trajectory` | 跨模型对比分析 TerminalBench 轨迹数据（按 instance 聚合） | `instance_path` | `analysis_path`, `analysis_content`, `analysis_thinking` |
 
 ### 支持的 Provider（API 后端）
 
@@ -247,10 +250,10 @@ python run.py \
 | `--backend cli` | - | 使用 CLI 后端 |
 | `--cli-cmd` | `claude` | CLI 可执行文件名或路径 |
 | `--cli-model` | `sonnet` | 传给 CLI `--model` 的模型名 |
-| `--agent-name` | 无 | Agent 名称（从 agents 目录加载） |
-| `--agents-dir` | 无 | Agent 定义文件目录（自动注册） |
-| `--skills` | 无 | 技能名称列表（逗号分隔） |
-| `--skills-dir` | 无 | 技能定义文件目录（自动注册） |
+| `--agent-name` | 无 | Agent 名称，默认从 `./.claude/agents` 加载，若不存在则回退到 `./agents` |
+| `--agents-dir` | 无 | 显式指定 Agent 定义目录 |
+| `--skills` | 无 | 技能名称列表（逗号分隔），默认从 `./.claude/skills` 加载，若不存在则回退到 `./skills` |
+| `--skills-dir` | 无 | 显式指定 Claude-style skills 目录 |
 | `--agent-instructions` | 无 | Agent 指令 `.md` 文件路径（传统方式） |
 | `--cli-timeout` | `600` | 单次 subprocess 超时（秒） |
 | `--cli-extra-args` | 无 | 额外 CLI 参数（逗号分隔） |
@@ -474,9 +477,9 @@ class CsvLoader(BaseDataLoader):
 - **热重载**：API 后端运行中自动重载配置（每 30 分钟）
 - **连接重试**：失败自动换 client / 重新调用（默认 3 次）
 - **健康检查**：运行前测试所有 API 端点，只使用可用端点
-- **Agent 系统**：CLI 后端支持加载 `.md` Agent 定义文件，支持 YAML frontmatter 配置
-- **Skill 系统**：可复用的技能模块，支持动态组合和注入
-- **Agent/Skill 注册表**：自动发现和注册 agents/skills 目录下的定义文件
+- **Agent 系统**：CLI 后端支持加载 `./.claude/agents/*.md` Agent 定义文件，支持 YAML frontmatter 配置
+- **Skill 系统**：可复用的技能模块，支持 Claude 官方 `./.claude/skills/<name>/SKILL.md` 目录结构
+- **Agent/Skill 注册表**：优先发现和注册 `.claude` 下的定义文件，兼容旧的根目录布局
 - **Thinking 分离**：自动解析 `<think>...</think>` 标签或 `reasoning_content` 字段
 
 ## Agent 和 Skill 系统
@@ -489,13 +492,11 @@ CLI 后端现在支持模块化的 agent 和 skill 系统，详见 [AGENT_SKILL_
 # 使用预定义的 agent 和 skills
 python run.py --task stackoverflow --backend cli \
   --agent-name stackoverflow-enhancer \
-  --agents-dir ./agents \
   --skills code-analyzer,data-validator \
-  --skills-dir ./skills \
   -i input.jsonl -o output.jsonl
 ```
 
-**Agent 文件格式**（`agents/my_agent.md`）：
+**Agent 文件格式**（`.claude/agents/my-agent.md`）：
 ```markdown
 ---
 name: my-agent
@@ -507,14 +508,84 @@ description: Agent description
 Your agent prompt here...
 ```
 
-**Skill 文件格式**（`skills/my_skill.md`）：
+**Skill 文件格式**（`.claude/skills/my-skill/SKILL.md`）：
 ```markdown
 ---
 name: my-skill
 description: Skill description
-tools: [Read, Write, Bash]
+allowed-tools: [Read, Write, Bash]
 ---
 
 # Skill Instructions
 Your skill instructions here...
 ```
+
+## 完整示例
+
+### 示例：跨模型对比分析 TerminalBench 轨迹数据
+
+对同一任务实例下的多个模型轨迹进行对比分析，生成包含性能差异和模型表现的 Markdown 报告：
+
+```bash
+# 1. 准备输入数据（JSONL格式，每行包含 instance_path 字段，指向任务目录）
+echo '{"instance_path": "/volume/pt-coder/users/tuney/posttrain_data/tb-traj-reorganized-v2/adaptive-rejection-sampler"}' > traj_input.jsonl
+echo '{"instance_path": "/volume/pt-coder/users/tuney/posttrain_data/tb-traj-reorganized-v2/bn-fit-modify"}' >> traj_input.jsonl
+echo '{"instance_path": "/volume/pt-coder/users/tuney/posttrain_data/tb-traj-reorganized-v2/build-cython-ext"}' >> traj_input.jsonl
+
+# 2. 运行分析任务（只使用 skill，不需要自定义 agent）
+python run.py \
+  --task analyze_trajectory \
+  --backend cli \
+  --skills trajectory-analysis \
+  -i traj_input.jsonl \
+  -o traj_output.jsonl \
+  -w 4 \
+  --cli-timeout 1200
+
+# 3. 查看结果
+# - traj_output.jsonl: 包含原始数据 + task_name/analysis_content 字段
+# - 每个任务目录下生成 analysis_<task_name>.md 文件（由 Agent 使用 Write 工具保存）
+```
+
+**输入格式**：
+```json
+{"instance_path": "/path/to/task/directory"}
+```
+
+**输出格式**：
+```json
+{
+  "instance_path": "/path/to/task/directory",
+  "task_name": "adaptive-rejection-sampler",
+  "analysis_content": "# Cross-Model Trajectory Analysis...",
+  "analysis_thinking": "<think>...</think>"
+}
+```
+
+**说明**：
+- Agent 使用 `Glob` 和 `Read` 工具自动发现和加载所有模型的轨迹数据
+- Agent 按照 `trajectory-analysis` skill 指导进行跨模型对比分析
+- Agent 使用 `Write` 工具将 markdown 报告保存到 `{instance_path}/analysis_{task_name}.md`
+- 框架将 Agent 返回的内容存储到输出 JSONL
+
+**生成的 Markdown 报告结构**（跨模型对比分析）：
+- Executive Summary（执行摘要 - 含整体表现）
+- Performance Overview（性能总览 - 对比表格）
+- Task Context（任务背景）
+- Model-by-Model Analysis（逐模型详细分析）
+- Cross-Model Comparison（跨模型对比）
+  - Strategic Differences（策略差异）
+  - Performance Patterns（性能模式）
+  - Common Failure Modes（常见失败模式）
+  - Key Differentiators（关键差异点）
+- Efficiency Analysis（效率分析 - Token/时间/步数）
+- Quality Analysis（质量分析 - 针对成功模型）
+- Error Analysis（错误分析 - 针对失败模型）
+- Model Capability Insights（模型能力洞察）
+- Notable Patterns（显著模式）
+- Sample Exchanges（示例对话片段）
+- Recommendations（推荐建议）
+  - Model Selection Guidance（模型选择指南）
+  - Task Design Insights（任务设计洞察）
+  - Model Improvement Suggestions（模型改进建议）
+- Conclusion（结论 - 含性能排名）

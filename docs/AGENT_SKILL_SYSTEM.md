@@ -6,19 +6,22 @@ The hyperdistill now supports a modular agent and skill system for the CLI backe
 
 - **Define agents**: Pre-configured agent personas with specific instructions and models
 - **Define skills**: Reusable capabilities that can be loaded into agents
-- **Organize configurations**: Keep agent and skill definitions in separate `.md` files
+- **Organize configurations**: Follow Claude Code's project-level `.claude` layout
 - **Mix and match**: Combine agents with different skills for different tasks
 
 ## Directory Structure
 
 ```
 Hyperdistill/
-├── agents/                          # Your agent definitions
-│   ├── example_agent.md
-│   └── stackoverflow_enhancer.md
-├── skills/                          # Your skill definitions
-│   ├── code_analyzer.md
-│   └── data_validator.md
+├── .claude/
+│   ├── agents/                      # Your agent definitions
+│   │   ├── example-agent.md
+│   │   └── stackoverflow-enhancer.md
+│   └── skills/                      # Your Claude-style skills
+│       ├── code-analyzer/
+│       │   └── SKILL.md
+│       └── data-validator/
+│           └── SKILL.md
 └── hyperdistill/
     ├── agents/                      # Agent system code
     │   ├── __init__.py
@@ -58,13 +61,14 @@ You are a technical expert specializing in...
 
 ## Skill File Format
 
-Skills are defined similarly:
+Skills follow Claude Code's directory-based format:
 
 ```markdown
+.claude/skills/code-analyzer/SKILL.md
 ---
 name: code-analyzer
 description: Analyze code for issues
-tools: [Read, Grep, Glob]
+allowed-tools: [Read, Grep, Glob]
 ---
 
 # Skill Instructions
@@ -74,9 +78,9 @@ This skill helps analyze code for...
 
 ### Skill Frontmatter Fields
 
-- `name`: Skill identifier (required, defaults to filename)
+- `name`: Skill identifier (required, defaults to directory name for `SKILL.md`)
 - `description`: Brief description (optional)
-- `tools`: List of Claude Code tools the skill uses (optional)
+- `allowed-tools`: List of Claude Code tools the skill uses (optional)
 - Any other fields are stored in `metadata`
 
 ## CLI Usage
@@ -84,15 +88,14 @@ This skill helps analyze code for...
 ### Using Agents
 
 ```bash
-# Use agent by name (from agents directory)
+# Use agent by name (defaults to ./.claude/agents)
 python run.py --task stackoverflow --backend cli \
   --agent-name stackoverflow-enhancer \
-  --agents-dir ./agents \
   -i input.jsonl -o output.jsonl
 
 # Legacy: Use agent instructions file directly
 python run.py --task stackoverflow --backend cli \
-  --agent-instructions ./agents/stackoverflow_enhancer.md \
+  --agent-instructions ./.claude/agents/stackoverflow-enhancer.md \
   -i input.jsonl -o output.jsonl
 ```
 
@@ -102,9 +105,7 @@ python run.py --task stackoverflow --backend cli \
 # Load skills with an agent
 python run.py --task query_response --backend cli \
   --agent-name example-agent \
-  --agents-dir ./agents \
   --skills code-analyzer,data-validator \
-  --skills-dir ./skills \
   -i input.jsonl -o output.jsonl
 ```
 
@@ -112,10 +113,10 @@ python run.py --task query_response --backend cli \
 
 | Parameter | Description |
 |-----------|-------------|
-| `--agent-name NAME` | Name of agent to load from registry |
-| `--agents-dir DIR` | Directory containing agent .md files (auto-registered) |
-| `--skills LIST` | Comma-separated skill names to load |
-| `--skills-dir DIR` | Directory containing skill .md files (auto-registered) |
+| `--agent-name NAME` | Name of agent to load from registry (defaults to `./.claude/agents`) |
+| `--agents-dir DIR` | Directory containing agent `.md` files |
+| `--skills LIST` | Comma-separated skill names to load (defaults to `./.claude/skills`) |
+| `--skills-dir DIR` | Directory containing Claude-style skills directories |
 | `--agent-instructions PATH` | Legacy: direct path to agent .md file |
 
 ## Programmatic Usage
@@ -126,15 +127,15 @@ from hyperdistill.skills import SkillLoader, SkillRegistry
 from hyperdistill.backends.cli_backend import CliBackend
 
 # Load agents and skills
-AgentRegistry.load_from_directory("agents")
-SkillRegistry.load_from_directory("skills")
+AgentRegistry.load_from_directory(".claude/agents")
+SkillRegistry.load_from_directory(".claude/skills")
 
 # Create backend with agent and skills
 backend = CliBackend(
     agent_name="stackoverflow-enhancer",
     skills=["code-analyzer", "data-validator"],
-    agents_dir="agents",
-    skills_dir="skills",
+    agents_dir=".claude/agents",
+    skills_dir=".claude/skills",
 )
 
 # The backend will automatically:
@@ -169,17 +170,18 @@ Priority order:
 
 ### Agent/Skill Loading
 
-- **Auto-registration**: When `--agents-dir` or `--skills-dir` is specified, all `.md` files are automatically loaded into registries
+- **Auto-registration**: When `--agents-dir` or `--skills-dir` is specified, definitions are automatically loaded into registries
 - **On-demand loading**: Agents/skills are retrieved by name when needed
 - **Validation**: Files with invalid YAML frontmatter will be skipped with a warning
+- **Compatibility**: `skills` supports both Claude-style `SKILL.md` directories and legacy flat `.md` files
 
 ## Examples
 
 See:
 - `examples/agent_example.py` - Complete usage examples
 - `test_agent_skill_system.py` - Test suite
-- `agents/` - Example agent definitions
-- `skills/` - Example skill definitions
+- `.claude/agents/` - Example agent definitions
+- `.claude/skills/` - Example skill definitions
 
 ## Best Practices
 
@@ -195,7 +197,7 @@ See:
 
 3. **Organization**
    - Use descriptive filenames (they become default names)
-   - Group related agents/skills in subdirectories (future feature)
+   - Keep project-scoped definitions under `.claude/agents` and `.claude/skills`
    - Version control your agent/skill definitions
 
 4. **Naming Conventions**
@@ -210,7 +212,6 @@ The system is fully backward compatible with the legacy `--agent-instructions` p
 ## Future Enhancements
 
 Potential improvements:
-- Subdirectory support for organizing agents/skills
 - Agent/skill versioning
 - Skill dependencies
 - Agent composition (agents that inherit from other agents)

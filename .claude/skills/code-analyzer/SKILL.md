@@ -1,7 +1,7 @@
 ---
 name: code-analyzer
 description: Analyze code and identify issues, patterns, and improvements
-tools: [Read, Grep, Glob]
+allowed-tools: [Read, Grep, Glob]
 ---
 
 # Code Analyzer Skill

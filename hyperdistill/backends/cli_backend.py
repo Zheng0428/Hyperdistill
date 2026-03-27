@@ -31,6 +31,22 @@ class CliBackend(BaseBackend):
 
     name = "cli"
 
+    @staticmethod
+    def _resolve_registry_dir(explicit_dir: Optional[str], preferred_dir: str, legacy_dir: str) -> Optional[str]:
+        """Resolve agent/skill directories with Claude-style defaults first."""
+        if explicit_dir:
+            return explicit_dir
+
+        preferred_path = Path(preferred_dir)
+        if preferred_path.exists():
+            return str(preferred_path)
+
+        legacy_path = Path(legacy_dir)
+        if legacy_path.exists():
+            return str(legacy_path)
+
+        return explicit_dir
+
     def __init__(
         self,
         cli_cmd: str = "claude",
@@ -63,6 +79,17 @@ class CliBackend(BaseBackend):
         self.timeout = timeout
         self.extra_env = extra_env or {}
         self.cli_extra_args = cli_extra_args or []
+
+        agents_dir = self._resolve_registry_dir(
+            agents_dir,
+            preferred_dir=".claude/agents",
+            legacy_dir="agents",
+        )
+        skills_dir = self._resolve_registry_dir(
+            skills_dir,
+            preferred_dir=".claude/skills",
+            legacy_dir="skills",
+        )
 
         # Load agents/skills from directories if specified
         if agents_dir:
@@ -185,15 +212,27 @@ class CliBackend(BaseBackend):
         """Build the CLI command list.
 
         Returns:
-            e.g., ['claude', '--model', 'sonnet', '--bare']
+            e.g., ['claude', '--bare', '--dangerously-skip-permissions', '--model', 'MiniMax-M2.5']
         """
-        cmd = [self.cli_cmd, "--model", self.model, "--bare"]
+        cmd = [
+            self.cli_cmd,
+            "--bare",
+            "--print",
+            "--no-session-persistence",
+            "--dangerously-skip-permissions",
+            "--model",
+            self.model
+        ]
         cmd.extend(self.cli_extra_args)
         return cmd
 
     def _build_env(self) -> Dict[str, str]:
-        """Build the environment dict for the subprocess."""
+        """Build the environment dict for the subprocess.
+
+        Sets IS_SANDBOX=1 to enable dangerous permission skipping.
+        """
         env = os.environ.copy()
+        env["IS_SANDBOX"] = "1"
         env.update(self.extra_env)
         return env
 
@@ -252,7 +291,6 @@ class CliBackend(BaseBackend):
         prompt = self._build_prompt(item, task)
         cmd = self._build_cmd()
         env = self._build_env()
-
         # Async subprocess
         proc = await asyncio.create_subprocess_exec(
             *cmd,

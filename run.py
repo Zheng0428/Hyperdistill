@@ -36,13 +36,15 @@ Examples:
 
   # CLI agent backend
   python run.py --task stackoverflow --backend cli --cli-model sonnet \\
-    --agent-instructions /path/to/agent.md \\
+    --agent-name stackoverflow-enhancer \\
+    --skills code-analyzer,data-validator \\
     -i input.jsonl -o output.jsonl -w 4
 
   # CLI agent with custom API endpoint
   ANTHROPIC_BASE_URL=https://... ANTHROPIC_API_KEY=sk-xxx \\
-  python run.py --task stackoverflow --backend cli --cli-model MiniMax-M2.5 \\
-    --agent-instructions agent.md -i input.jsonl -o output.jsonl
+  python run.py --task stackoverflow --backend cli \\
+    --agent-name stackoverflow-enhancer \\
+    --cli-model MiniMax-M2.5 -i input.jsonl -o output.jsonl
 
   # Health check
   python run.py --health-check --config configs/config.json
@@ -112,19 +114,19 @@ Examples:
     )
     cli_group.add_argument(
         "--agent-name", type=str, default=None,
-        help="Name of agent to load from agents directory (overrides --agent-instructions)",
+        help="Name of agent to load from .claude/agents (falls back to ./agents, overrides --agent-instructions)",
     )
     cli_group.add_argument(
         "--agents-dir", type=str, default=None,
-        help="Directory containing agent .md files (auto-registered)",
+        help="Directory containing agent .md files (default: ./.claude/agents when --agent-name is used)",
     )
     cli_group.add_argument(
         "--skills", type=str, default=None,
-        help="Comma-separated skill names to load from skills directory",
+        help="Comma-separated skill names to load from .claude/skills (falls back to ./skills)",
     )
     cli_group.add_argument(
         "--skills-dir", type=str, default=None,
-        help="Directory containing skill .md files (auto-registered)",
+        help="Directory containing Claude-style skills directories (default: ./.claude/skills when --skills is used)",
     )
     cli_group.add_argument(
         "--cli-timeout", type=int, default=600,
@@ -328,14 +330,22 @@ def _build_cli_backend(args):
     if args.skills:
         skills = [s.strip() for s in args.skills.split(",") if s.strip()]
 
+    agents_dir = args.agents_dir
+    if args.agent_name and not agents_dir:
+        agents_dir = ".claude/agents"
+
+    skills_dir = args.skills_dir
+    if skills and not skills_dir:
+        skills_dir = ".claude/skills"
+
     return CliBackend(
         cli_cmd=args.cli_cmd,
         model=args.cli_model,
         agent_instructions_path=args.agent_instructions,
         agent_name=args.agent_name,
         skills=skills,
-        agents_dir=args.agents_dir,
-        skills_dir=args.skills_dir,
+        agents_dir=agents_dir,
+        skills_dir=skills_dir,
         timeout=args.cli_timeout,
         cli_extra_args=extra_args,
     )

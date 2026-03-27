@@ -1,7 +1,7 @@
 ---
 name: data-validator
 description: Validate data quality and structure
-tools: [Read, Write]
+allowed-tools: [Read, Write]
 ---
 
 # Data Validator Skill

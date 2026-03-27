@@ -43,15 +43,15 @@ Modified `run.py`:
 
 ### 4. Example Agents
 
-Created `agents/` directory with:
-- `example_agent.md` - Basic example agent
-- `stackoverflow_enhancer.md` - Specialized SO Q&A enhancer
+Created `.claude/agents/` directory with:
+- `example-agent.md` - Basic example agent
+- `stackoverflow-enhancer.md` - Specialized SO Q&A enhancer
 
 ### 5. Example Skills
 
-Created `skills/` directory with:
-- `code_analyzer.md` - Code analysis skill
-- `data_validator.md` - Data validation skill
+Created `.claude/skills/` directory with:
+- `code-analyzer/SKILL.md` - Code analysis skill
+- `data-validator/SKILL.md` - Data validation skill
 
 ### 6. Documentation
 
@@ -84,13 +84,14 @@ Your agent prompt content here...
 - `description` - Brief description (optional)
 - Other fields stored in `metadata` dict
 
-### Skill Definition (.md)
+### Skill Definition (`SKILL.md`)
 
 ```markdown
+.claude/skills/my-skill/SKILL.md
 ---
 name: my-skill
 description: Skill description
-tools: [Read, Write, Bash]
+allowed-tools: [Read, Write, Bash]
 ---
 
 # Skill Instructions
@@ -99,9 +100,9 @@ Your skill content here...
 ```
 
 **Frontmatter Fields**:
-- `name` - Skill identifier (required, defaults to filename)
+- `name` - Skill identifier (required, defaults to directory name for `SKILL.md`)
 - `description` - Brief description (optional)
-- `tools` - List of Claude Code tools used (optional)
+- `allowed-tools` - List of Claude Code tools used (optional)
 - Other fields stored in `metadata` dict
 
 ## Usage Examples
@@ -111,7 +112,6 @@ Your skill content here...
 ```bash
 python run.py --task stackoverflow --backend cli \
   --agent-name stackoverflow-enhancer \
-  --agents-dir ./agents \
   -i input.jsonl -o output.jsonl
 ```
 
@@ -120,9 +120,7 @@ python run.py --task stackoverflow --backend cli \
 ```bash
 python run.py --task query_response --backend cli \
   --agent-name example-agent \
-  --agents-dir ./agents \
   --skills code-analyzer,data-validator \
-  --skills-dir ./skills \
   -i input.jsonl -o output.jsonl
 ```
 
@@ -130,7 +128,7 @@ python run.py --task query_response --backend cli \
 
 ```bash
 python run.py --task stackoverflow --backend cli \
-  --agent-instructions ./agents/stackoverflow_enhancer.md \
+  --agent-instructions ./.claude/agents/stackoverflow-enhancer.md \
   -i input.jsonl -o output.jsonl
 ```
 
@@ -139,8 +137,8 @@ python run.py --task stackoverflow --backend cli \
 ### 1. Loading Phase
 
 When `CliBackend` is initialized:
-1. If `agents_dir` specified → load all .md files into `AgentRegistry`
-2. If `skills_dir` specified → load all .md files into `SkillRegistry`
+1. If `agents_dir` specified → load all agent `.md` files into `AgentRegistry`
+2. If `skills_dir` specified → load all Claude-style skills into `SkillRegistry`
 3. If `agent_name` specified → retrieve agent from registry
 4. If agent has `model` field → override CLI `--cli-model`
 5. If `skills` list specified → retrieve skills from registry
@@ -212,7 +210,6 @@ Updated `requirements.txt`:
 ## Future Enhancements
 
 Potential improvements mentioned in documentation:
-- Subdirectory support for organizing agents/skills
 - Agent/skill versioning
 - Skill dependencies
 - Agent composition (inheritance)
@@ -234,10 +231,10 @@ Potential improvements mentioned in documentation:
 4. `hyperdistill/skills/__init__.py`
 5. `hyperdistill/skills/skill_loader.py`
 6. `hyperdistill/skills/skill_registry.py`
-7. `agents/example_agent.md`
-8. `agents/stackoverflow_enhancer.md`
-9. `skills/code_analyzer.md`
-10. `skills/data_validator.md`
+7. `.claude/agents/example-agent.md`
+8. `.claude/agents/stackoverflow-enhancer.md`
+9. `.claude/skills/code-analyzer/SKILL.md`
+10. `.claude/skills/data-validator/SKILL.md`
 11. `examples/agent_example.py`
 12. `test_agent_skill_system.py`
 13. `AGENT_SKILL_SYSTEM.md`

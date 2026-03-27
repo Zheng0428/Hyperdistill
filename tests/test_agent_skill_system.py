@@ -6,10 +6,14 @@ Test script for agent and skill system
 import sys
 import os
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, PROJECT_ROOT)
 
 from hyperdistill.agents import AgentLoader, AgentRegistry
 from hyperdistill.skills import SkillLoader, SkillRegistry
+
+AGENTS_DIR = os.path.join(PROJECT_ROOT, ".claude", "agents")
+SKILLS_DIR = os.path.join(PROJECT_ROOT, ".claude", "skills")
 
 
 def test_agent_loading():
@@ -17,14 +21,14 @@ def test_agent_loading():
     print("Testing Agent Loading...")
 
     # Test loading single agent
-    agent = AgentLoader.load("agents/example_agent.md")
+    agent = AgentLoader.load(f"{AGENTS_DIR}/example-agent.md")
     assert agent.name == "example-agent"
     assert agent.model == "sonnet"
     assert len(agent.content) > 0
     print("✓ Single agent loading works")
 
     # Test loading directory
-    agents = AgentLoader.load_directory("agents")
+    agents = AgentLoader.load_directory(AGENTS_DIR)
     assert len(agents) > 0
     assert "example-agent" in agents
     assert "stackoverflow-enhancer" in agents
@@ -38,14 +42,15 @@ def test_skill_loading():
     print("\nTesting Skill Loading...")
 
     # Test loading single skill
-    skill = SkillLoader.load("skills/code_analyzer.md")
+    skill = SkillLoader.load(f"{SKILLS_DIR}/code-analyzer/SKILL.md")
     assert skill.name == "code-analyzer"
     assert len(skill.content) > 0
     assert skill.tools is not None
+    assert "Read" in skill.tools
     print("✓ Single skill loading works")
 
     # Test loading directory
-    skills = SkillLoader.load_directory("skills")
+    skills = SkillLoader.load_directory(SKILLS_DIR)
     assert len(skills) > 0
     assert "code-analyzer" in skills
     assert "data-validator" in skills
@@ -63,8 +68,8 @@ def test_registry():
     SkillRegistry.clear()
 
     # Load from directory
-    AgentRegistry.load_from_directory("agents")
-    SkillRegistry.load_from_directory("skills")
+    AgentRegistry.load_from_directory(AGENTS_DIR)
+    SkillRegistry.load_from_directory(SKILLS_DIR)
 
     # Check registration
     assert len(AgentRegistry.list_agents()) > 0
@@ -92,14 +97,20 @@ def test_cli_backend_integration():
     try:
         # Import directly to avoid the __init__.py import chain
         import importlib.util
+        import types
+
+        sys.modules.setdefault("hyperdistill", types.ModuleType("hyperdistill"))
+        backends_pkg = types.ModuleType("hyperdistill.backends")
+        backends_pkg.__path__ = []
+        sys.modules["hyperdistill.backends"] = backends_pkg
+
         spec = importlib.util.spec_from_file_location(
-            "cli_backend",
-            "distill_pipeline/backends/cli_backend.py"
+            "hyperdistill.backends.cli_backend",
+            os.path.join(PROJECT_ROOT, "hyperdistill", "backends", "cli_backend.py")
         )
         cli_backend_module = importlib.util.module_from_spec(spec)
 
         # Need to mock the parent imports
-        import sys
         sys.modules['hyperdistill.backends.base'] = type(sys)('mock')
         sys.modules['hyperdistill.backends.base'].BaseBackend = object
         sys.modules['hyperdistill.tasks.base'] = type(sys)('mock')
@@ -123,25 +134,22 @@ def test_cli_backend_integration():
         # Test with agent_name
         backend = CliBackend(
             agent_name="example-agent",
-            agents_dir="agents",
         )
         assert backend.agent is not None
         assert backend.agent.name == "example-agent"
-        print("✓ CLI Backend loads agent correctly")
+        print("✓ CLI Backend loads agent correctly from default .claude path")
 
         # Test with skills
         backend = CliBackend(
             agent_name="example-agent",
-            agents_dir="agents",
             skills=["code-analyzer", "data-validator"],
-            skills_dir="skills",
         )
         assert len(backend.skills) == 2
-        print(f"✓ CLI Backend loads skills correctly ({len(backend.skills)} skills)")
+        print(f"✓ CLI Backend loads skills correctly from default .claude path ({len(backend.skills)} skills)")
 
         # Test legacy agent_instructions_path
         backend = CliBackend(
-            agent_instructions_path="agents/example_agent.md",
+            agent_instructions_path=f"{AGENTS_DIR}/example-agent.md",
         )
         assert len(backend.agent_instructions) > 0
         print("✓ CLI Backend supports legacy agent_instructions_path")

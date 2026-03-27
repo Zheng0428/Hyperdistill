@@ -5,13 +5,13 @@
 ## 文件说明
 
 ### 1. Agent 定义
-**`agents/qa_expert.md`** - Q&A 专家 Agent
+**`.claude/agents/qa-expert.md`** - Q&A 专家 Agent
 - 专门用于生成高质量问答数据
 - 包含完整的回答策略和质量标准
 - 自动使用 `sonnet` 模型
 
 ### 2. Skill 定义
-**`skills/enhanced_response_generation.md`** - 增强回复生成技能
+**`.claude/skills/enhanced-response-generation/SKILL.md`** - 增强回复生成技能
 - 提供系统化的思考和回答框架
 - 包含详细的质量指南和最佳实践
 - 支持多种问题类型（How/Why/What/When）
@@ -61,9 +61,9 @@ bash run_qa_agent.sh
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `AGENT_NAME` | `qa-expert` | Agent 名称 |
-| `AGENTS_DIR` | `./agents` | Agent 目录 |
+| `AGENTS_DIR` | `../.claude/agents` | Agent 目录 |
 | `SKILLS` | `enhanced-response-generation` | Skill 列表（逗号分隔） |
-| `SKILLS_DIR` | `./skills` | Skill 目录 |
+| `SKILLS_DIR` | `../.claude/skills` | Skill 目录 |
 
 ### CLI 配置
 
@@ -126,7 +126,7 @@ bash run_qa_agent.sh
 当处理每个问题时，系统按以下顺序构建 prompt：
 
 ```
-1. Agent Instructions (from qa_expert.md)
+1. Agent Instructions (from `.claude/agents/qa-expert.md`)
    ↓
 2. Available Skills Section
    ├── Skill: enhanced-response-generation
@@ -292,13 +292,13 @@ cat output/qa_results.part*.jsonl > output/qa_results_merged.jsonl
 ### 问题 1: Agent 文件不存在
 
 ```
-Error: Agent file does not exist: agents/qa-expert.md
+Error: Agent file does not exist: ../.claude/agents/qa-expert.md
 ```
 
 **解决方案**：
 ```bash
 # 检查 agent 目录
-ls -la agents/
+ls -la ../.claude/agents/
 
 # 或使用其他 agent
 AGENT_NAME=example-agent bash run_qa_agent.sh
@@ -307,13 +307,13 @@ AGENT_NAME=example-agent bash run_qa_agent.sh
 ### 问题 2: Skill 文件不存在
 
 ```
-Error: Skill file does not exist: skills/enhanced-response-generation.md
+Error: Skill file does not exist: ../.claude/skills/enhanced-response-generation/SKILL.md
 ```
 
 **解决方案**：
 ```bash
 # 检查 skill 目录
-ls -la skills/
+find ../.claude/skills -mindepth 1 -maxdepth 1 -type d
 
 # 或使用其他 skills
 SKILLS="code-analyzer" bash run_qa_agent.sh
@@ -343,9 +343,9 @@ WORKERS=2 bash run_qa_agent.sh
 
 ### 创建自定义 Agent
 
-1. 在 `agents/` 目录创建新文件：
+1. 在 `../.claude/agents/` 目录创建新文件：
 ```bash
-vim agents/my_custom_agent.md
+vim ../.claude/agents/my-custom-agent.md
 ```
 
 2. 添加 YAML frontmatter 和内容：
@@ -367,9 +367,10 @@ AGENT_NAME=my-custom-agent bash run_qa_agent.sh
 
 ### 创建自定义 Skill
 
-1. 在 `skills/` 目录创建新文件：
+1. 在 `../.claude/skills/` 目录创建新文件：
 ```bash
-vim skills/my_custom_skill.md
+mkdir -p ../.claude/skills/my-custom-skill
+vim ../.claude/skills/my-custom-skill/SKILL.md
 ```
 
 2. 添加内容：
@@ -377,7 +378,7 @@ vim skills/my_custom_skill.md
 ---
 name: my-custom-skill
 description: My custom skill
-tools: [Read, Write]
+allowed-tools: [Read, Write]
 ---
 
 # My Custom Skill Instructions

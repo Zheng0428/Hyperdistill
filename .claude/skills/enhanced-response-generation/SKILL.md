@@ -1,7 +1,7 @@
 ---
 name: enhanced-response-generation
 description: Generate high-quality, comprehensive responses with structured thinking
-tools: [Read, Write]
+allowed-tools: [Read, Write]
 ---
 
 # Enhanced Response Generation Skill

@@ -17,6 +17,7 @@
 
 # 切换到脚本所在目录
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 # ============================================
@@ -31,11 +32,11 @@ TASK=${TASK:-"query_response"}
 
 # Agent 配置
 AGENT_NAME=${AGENT_NAME:-"qa-expert"}
-AGENTS_DIR=${AGENTS_DIR:-"./agents"}
+AGENTS_DIR=${AGENTS_DIR:-"../.claude/agents"}
 
 # Skill 配置
 SKILLS=${SKILLS:-"enhanced-response-generation"}
-SKILLS_DIR=${SKILLS_DIR:-"./skills"}
+SKILLS_DIR=${SKILLS_DIR:-"../.claude/skills"}
 
 # CLI 配置
 CLI_CMD=${CLI_CMD:-"claude"}
@@ -112,12 +113,12 @@ fi
 IFS=',' read -ra SKILL_ARRAY <<< "$SKILLS"
 for skill in "${SKILL_ARRAY[@]}"; do
     skill=$(echo "$skill" | xargs)  # trim whitespace
-    SKILL_FILE="${SKILLS_DIR}/${skill}.md"
+    SKILL_FILE="${SKILLS_DIR}/${skill}/SKILL.md"
     if [ ! -f "$SKILL_FILE" ]; then
         echo "Error: Skill file does not exist: $SKILL_FILE"
         echo ""
         echo "Available skills in ${SKILLS_DIR}:"
-        ls -1 "${SKILLS_DIR}"/*.md 2>/dev/null | xargs -n 1 basename | sed 's/.md$//' | sed 's/^/  - /'
+        find "${SKILLS_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" 2>/dev/null | sed 's/^/  - /'
         echo ""
         exit 1
     fi
@@ -193,7 +194,7 @@ echo "Starting Q&A generation..."
 echo ""
 
 # 构建命令
-CMD="python3 -u run.py \
+CMD="python3 -u ${PROJECT_ROOT}/run.py \
     --task $TASK \
     --backend $BACKEND \
     --agent-name $AGENT_NAME \

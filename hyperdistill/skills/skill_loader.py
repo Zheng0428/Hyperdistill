@@ -32,11 +32,31 @@ class SkillLoader:
     """Load skill definitions from markdown files with YAML frontmatter."""
 
     @staticmethod
+    def _default_name(path: Path) -> str:
+        """Return the default skill name for a skill file."""
+        if path.name == "SKILL.md":
+            return path.parent.name
+        return path.stem
+
+    @staticmethod
     def load(file_path: str) -> Skill:
         """Load a skill from a markdown file.
 
-        Format:
+        Supported formats:
         ```markdown
+        .claude/skills/review-pr/SKILL.md
+        ---
+        name: review-pr
+        description: Review a GitHub pull request
+        allowed-tools: Bash(git:*), Read, Grep
+        ---
+
+        # Skill instructions
+        ...skill content...
+        ```
+
+        ```markdown
+        # Legacy flat file format
         ---
         name: review-pr
         description: Review a GitHub pull request
@@ -68,7 +88,7 @@ class SkillLoader:
 
         if not frontmatter_match:
             # No frontmatter, use filename as name
-            name = path.stem
+            name = SkillLoader._default_name(path)
             return Skill(
                 name=name,
                 content=content.strip(),
@@ -83,9 +103,9 @@ class SkillLoader:
             raise ValueError(f"Invalid YAML frontmatter in {file_path}: {e}")
 
         # Extract known fields
-        name = frontmatter.pop("name", path.stem)
+        name = frontmatter.pop("name", SkillLoader._default_name(path))
         description = frontmatter.pop("description", None)
-        tools = frontmatter.pop("tools", None)
+        tools = frontmatter.pop("allowed-tools", frontmatter.pop("tools", None))
 
         # Store remaining fields in metadata
         metadata = frontmatter if frontmatter else None
@@ -103,7 +123,8 @@ class SkillLoader:
         """Load all skill files from a directory.
 
         Args:
-            directory: Path to directory containing .md skill files
+            directory: Path to a Claude-style skills directory or legacy flat
+                directory containing `.md` skill files.
 
         Returns:
             Dict mapping skill names to Skill objects
@@ -113,7 +134,14 @@ class SkillLoader:
             raise ValueError(f"Directory not found: {directory}")
 
         skills = {}
-        for file_path in path.glob("*.md"):
+        skill_files = sorted(path.rglob("SKILL.md"))
+        legacy_skill_files = sorted(
+            file_path
+            for file_path in path.glob("*.md")
+            if file_path.name != "SKILL.md"
+        )
+
+        for file_path in [*skill_files, *legacy_skill_files]:
             try:
                 skill = SkillLoader.load(str(file_path))
                 skills[skill.name] = skill
